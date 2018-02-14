@@ -1,0 +1,35 @@
+#######################################
+# Syntax Coloring Map For SSD1306_I2C
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SSD1306_I2C	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+Initialize	KEYWORD2
+Clear	KEYWORD2
+GetPixel	KEYWORD2
+GetSeg	KEYWORD2
+SetSeg	KEYWORD2
+SetPixel	KEYWORD2
+IsReverse	KEYWORD2
+SetReverse	KEYWORD2
+Refresh	KEYWORD2
+IsSleep	KEYWORD2
+Sleep	KEYWORD2
+Wakeup	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
