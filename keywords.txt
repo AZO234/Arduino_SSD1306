@@ -13,6 +13,8 @@ SSD1306_I2C	KEYWORD1
 #######################################
 
 Initialize	KEYWORD2
+GetMaxX	KEYWORD2
+GetMaxY	KEYWORD2
 Clear	KEYWORD2
 GetPixel	KEYWORD2
 GetSeg	KEYWORD2

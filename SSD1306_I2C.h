@@ -1,7 +1,7 @@
 #ifndef SSD1306_I2C_H
 #define SSD1306_I2C_H
 
-/* Library of OLED modules connect with SSD1306(I2C bus) by AZO */
+/* SSD1306 I2C Driver for Arduino by AZO */
 
 /* Don't disable until finding read GDDRAM via I2C method ... */
 #define SSD1306_I2C_ENABLE_FRAMEBUFFER
@@ -10,6 +10,8 @@ class SSD1306_I2C {
 	public:
 		/* MaxX and MaxY must be multiples of 8 */
 		void Initialize(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY, const unsigned char ucBeginI2C);
+		unsigned int GetMaxX(void);
+		unsigned int GetMaxY(void);
 		void Clear(void);
 
 		unsigned int GetPixel(const unsigned int uiX, const unsigned int uiY);

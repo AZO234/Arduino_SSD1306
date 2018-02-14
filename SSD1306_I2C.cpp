@@ -1,4 +1,4 @@
-/* Library of OLED modules connect with SSD1306(I2C bus) by AZO */
+/* SSD1306 I2C Driver for Arduino by AZO */
 
 #include <string.h>
 #include <Arduino.h>
@@ -71,6 +71,14 @@ void SSD1306_I2C::Initialize(const unsigned char ucI2CAddress, const unsigned in
 	Wire.endTransmission();
 }
 
+unsigned int SSD1306_I2C::GetMaxX(void) {
+	return this->uiMaxX;
+}
+
+unsigned int SSD1306_I2C::GetMaxY(void) {
+	return this->uiMaxY;
+}
+
 void SSD1306_I2C::Clear(void) {
 #ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	memset(this->pucFrameBuffer, 0, this->uiMaxY * this->uiMaxX / 8);
@@ -136,9 +144,7 @@ unsigned char SSD1306_I2C::GetSeg(unsigned int uiX, unsigned int uiSeg) {
 		Wire.write(0b01000000); //control byte, Co bit = 0 (continue), D/C# = 1 (data)
 	Wire.endTransmission();
 	Wire.requestFrom((int)this->ucI2CAddress, (int)1);
-	while(Wire.available()) {
-		ucPattern = Wire.read();
-	}
+	ucPattern = Wire.read();
 
 	return ucPattern;
 #endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
@@ -179,18 +185,10 @@ void SSD1306_I2C::SetPixel(const unsigned int uiX, const unsigned int uiY, const
 	}
 
 	ucPattern = this->GetSeg(uiX, uiY / 8);
-	if(this->ucReverse) {
-		if(uiColor) {
-			ucPattern &= ~(1 << (uiY % 8));
-		} else {
-			ucPattern |=   1 << (uiY % 8) ;
-		}
+	if(uiColor) {
+		ucPattern |=   1 << (uiY % 8) ;
 	} else {
-		if(uiColor) {
-			ucPattern |=   1 << (uiY % 8) ;
-		} else {
-			ucPattern &= ~(1 << (uiY % 8));
-		}
+		ucPattern &= ~(1 << (uiY % 8));
 	}
 	this->SetSeg(uiX, uiY / 8, ucPattern);
 }
