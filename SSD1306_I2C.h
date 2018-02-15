@@ -9,7 +9,9 @@
 class SSD1306_I2C {
 	public:
 		/* MaxX and MaxY must be multiples of 8 */
-		void Initialize(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY, const unsigned char ucBeginI2C);
+		SSD1306_I2C(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY);
+
+		void Initialize(const unsigned char ucBeginI2C);
 		unsigned int GetMaxX(void);
 		unsigned int GetMaxY(void);
 		void Clear(void);

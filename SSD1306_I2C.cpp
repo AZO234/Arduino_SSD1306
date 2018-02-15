@@ -5,16 +5,19 @@
 #include <Wire.h>
 #include "SSD1306_I2C.h"
 
-void SSD1306_I2C::Initialize(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY, const unsigned char ucBeginI2C) {
+SSD1306_I2C::SSD1306_I2C(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY) {
 #ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	this->pucFrameBuffer = new unsigned char[this->uiMaxY * this->uiMaxX / 8];
 	memset(this->pucFrameBuffer, 0, this->uiMaxY * this->uiMaxX / 8);
 #endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 	this->uiMaxX = uiMaxX;
 	this->uiMaxY = uiMaxY;
+	this->ucI2CAddress = ucI2CAddress >> 1;
+}
+
+void SSD1306_I2C::Initialize(const unsigned char ucBeginI2C) {
 	this->ucSleep = 0;
 	this->ucReverse = 0;
-	this->ucI2CAddress = ucI2CAddress >> 1;
 
 	if(ucBeginI2C) {
 		Wire.begin();

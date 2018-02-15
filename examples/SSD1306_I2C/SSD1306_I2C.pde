@@ -4,7 +4,7 @@
 
 extern Bit1BMP_t tImageLala;
 
-class SSD1306_I2C oMyDisplay;
+class SSD1306_I2C oMyDisplay(0x78, 128, 64);
 
 void DisplayImage(class SSD1306_I2C* poDisplay, const int iX, const int iY, const Bit1BMP_t* ptImage) {
   unsigned int uiX, uiY, uiMode;
@@ -33,7 +33,7 @@ void DisplayImage(class SSD1306_I2C* poDisplay, const int iX, const int iY, cons
 }
 
 void setup() {
-  oMyDisplay.Initialize(0x78, 128, 64, 1);
+  oMyDisplay.Initialize(1);
 
   oMyDisplay.Clear();
   DisplayImage(&oMyDisplay, 0, 0, &tImageLala);
