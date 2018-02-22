@@ -1,6 +1,7 @@
 /* SSD1306 I2C Driver for Arduino IDE by AZO */
 
 #include <string.h>
+#include <Arduino.h>
 #include <Wire.h>
 #include "SSD1306_I2C.h"
 
