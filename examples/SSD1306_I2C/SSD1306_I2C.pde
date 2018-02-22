@@ -27,7 +27,7 @@ void DisplayImage(class SSD1306_I2C* poDisplay, const int iX, const int iY, cons
         uiByteX = pgm_read_byte_near(ptImage->pucImageData + uiY * uiLineSize + uiX / 8);
       }
       uiColor = (uiByteX & 1 << (7 - (uiX % 8))) ? 1 : 0;
-      poDisplay->SetPixel(iX + uiX, iY + uiY, uiColor);
+      poDisplay->DrawPixel(iX + uiX, iY + uiY, uiColor);
     }
   }
 }
