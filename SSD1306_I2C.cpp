@@ -1,15 +1,12 @@
-/* SSD1306 I2C Driver for Arduino by AZO */
+/* SSD1306 I2C Driver for Arduino IDE by AZO */
 
 #include <string.h>
-#include <Arduino.h>
 #include <Wire.h>
 #include "SSD1306_I2C.h"
 
 SSD1306_I2C::SSD1306_I2C(const unsigned char ucI2CAddress, const unsigned int uiMaxX, const unsigned int uiMaxY) {
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	this->pucFrameBuffer = new unsigned char[this->uiMaxY * this->uiMaxX / 8];
 	memset(this->pucFrameBuffer, 0, this->uiMaxY * this->uiMaxX / 8);
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 	this->uiMaxX = uiMaxX;
 	this->uiMaxY = uiMaxY;
 	this->ucI2CAddress = ucI2CAddress >> 1;
@@ -83,35 +80,7 @@ unsigned int SSD1306_I2C::GetMaxY(void) {
 }
 
 void SSD1306_I2C::Clear(void) {
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	memset(this->pucFrameBuffer, 0, this->uiMaxY * this->uiMaxX / 8);
-#else	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
-	unsigned int uiSeg, uiX, uiColumn, uiCount;
-
-	for(uiSeg = 0; uiSeg < this->uiMaxY / 8; uiSeg++) {
-		Wire.beginTransmission(this->ucI2CAddress);
-			Wire.write(0b00000000); //control byte, Co bit = 1 (One command only), D/C# = 0 (command)
-				Wire.write(0xB0 | uiSeg); //set page start address(B0～B7)
-			Wire.write(0b00000000);
-				Wire.write(0x21); //set Column Address
-					Wire.write(0); //Column Start Address(0-127)
-					Wire.write(this->uiMaxX - 1); //Column Stop Address(0-127)
-		Wire.endTransmission();
-
-		for(uiColumn = 0; uiColumn < this->uiMaxX / 16; uiColumn++) { //column = 8byte x 16
-			Wire.beginTransmission(this->ucI2CAddress);
-				Wire.write(0b01000000); //control byte, Co bit = 0 (continue), D/C# = 1 (data)
-				for(uiCount = 0; uiCount < 16; uiCount++) { //continue to 31byte
-					if(ucReverse) {
-						Wire.write(0xFF);
-					} else {
-						Wire.write(0);
-					}
-				}
-			Wire.endTransmission();
-		}
-	}
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 }
 
 unsigned int SSD1306_I2C::GetPixel(unsigned int uiX, unsigned int uiY) {
@@ -130,27 +99,7 @@ unsigned char SSD1306_I2C::GetSeg(unsigned int uiX, unsigned int uiSeg) {
 		return 0;
 	}
 
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	return this->pucFrameBuffer[uiSeg * this->uiMaxX + uiX];
-#else	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
-	unsigned char ucPattern;
-
-	Wire.beginTransmission(this->ucI2CAddress);
-		Wire.write(0b00000000); //control byte, Co bit = 1 (One command only), D/C# = 0 (command)
-			Wire.write(0xB0 | uiSeg); //set page start address(B0～B7)
-		Wire.write(0b00000000);
-			Wire.write(0x21); //set Column Address
-				Wire.write(uiX); //Column Start Address
-				Wire.write(uiX); //Column Stop Address
-	Wire.endTransmission();
-	Wire.beginTransmission(this->ucI2CAddress);
-		Wire.write(0b01000000); //control byte, Co bit = 0 (continue), D/C# = 1 (data)
-	Wire.endTransmission();
-	Wire.requestFrom((int)this->ucI2CAddress, (int)1);
-	ucPattern = Wire.read();
-
-	return ucPattern;
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 }
 
 void SSD1306_I2C::SetSeg(unsigned int uiX, unsigned int uiSeg, unsigned char ucPattern) {
@@ -158,26 +107,7 @@ void SSD1306_I2C::SetSeg(unsigned int uiX, unsigned int uiSeg, unsigned char ucP
 		return;
 	}
 
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 	this->pucFrameBuffer[uiSeg * this->uiMaxX + uiX] = ucPattern;
-#else	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
-	Wire.beginTransmission(this->ucI2CAddress);
-		Wire.write(0b00000000); //control byte, Co bit = 1 (One command only), D/C# = 0 (command)
-			Wire.write(0xB0 | uiSeg); //set page start address(B0～B7)
-		Wire.write(0b00000000);
-			Wire.write(0x21); //set Column Address
-				Wire.write(uiX); //Column Start Address
-				Wire.write(uiX); //Column Stop Address
-	Wire.endTransmission();
-	Wire.beginTransmission(this->ucI2CAddress);
-		Wire.write(0b01000000); //control byte, Co bit = 0 (continue), D/C# = 1 (data)
-			if(this->ucReverse) {
-				Wire.write(~ucPattern);
-			} else {
-				Wire.write( ucPattern);
-			}
-	Wire.endTransmission();
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 }
 
 void SSD1306_I2C::SetPixel(const unsigned int uiX, const unsigned int uiY, const unsigned int uiColor) {
@@ -208,7 +138,6 @@ void SSD1306_I2C::SetReverse(const unsigned char ucEnable) {
 	}
 }
 
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 void SSD1306_I2C::Refresh(void) {
 	unsigned int uiSeg, uiX, uiColumn, uiCount;
 
@@ -236,7 +165,6 @@ void SSD1306_I2C::Refresh(void) {
 		}
 	}
 }
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 
 unsigned char SSD1306_I2C::IsSleep(void) {
 	return this->ucSleep;

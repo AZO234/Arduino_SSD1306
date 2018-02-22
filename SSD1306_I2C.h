@@ -1,10 +1,7 @@
 #ifndef SSD1306_I2C_H
 #define SSD1306_I2C_H
 
-/* SSD1306 I2C Driver for Arduino by AZO */
-
-/* Don't disable until finding read GDDRAM via I2C method ... */
-#define SSD1306_I2C_ENABLE_FRAMEBUFFER
+/* SSD1306 I2C Driver for Arduino IDE by AZO */
 
 class SSD1306_I2C {
 	public:
@@ -23,9 +20,7 @@ class SSD1306_I2C {
 
 		unsigned char IsReverse(void);
 		void SetReverse(const unsigned char ucEnable);
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 		void Refresh(void);
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 
 		unsigned char IsSleep(void);
 		void Sleep(void);
@@ -37,9 +32,7 @@ class SSD1306_I2C {
 		unsigned char ucReverse;
 		unsigned char ucSleep;
 		unsigned char ucI2CAddress;
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
 		unsigned char* pucFrameBuffer;
-#endif	/* SSD1306_I2C_ENABLE_FRAMEBUFFER */
 };
 
 #endif	/* SSD1306_I2C_H */
