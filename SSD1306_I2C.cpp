@@ -110,7 +110,7 @@ void SSD1306_I2C::SetSeg(unsigned int uiX, unsigned int uiSeg, unsigned char ucP
 	this->pucFrameBuffer[uiSeg * this->uiMaxX + uiX] = ucPattern;
 }
 
-void SSD1306_I2C::SetPixel(const unsigned int uiX, const unsigned int uiY, const unsigned int uiColor) {
+void SSD1306_I2C::DrawPixel(const unsigned int uiX, const unsigned int uiY, const unsigned int uiColor) {
 	unsigned char ucPattern;
 
 	if(uiX >= this->uiMaxX || uiY >= this->uiMaxY) {

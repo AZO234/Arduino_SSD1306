@@ -6,8 +6,8 @@ http://domisan.sakura.ne.jp/
 Library of OLED modules connect with SSD1306(I2C bus).
 
 First constrast instance of class SSD1306_I2C.  
-Next call Initialize(I2CAddressOfOLED, MaxX, MaxY, 1);  
-Then draw with SetPixel(); to framebuffer.  
+Next call Initialize(1);  
+Then draw with DrawPixel(); to framebuffer.  
 Finally call Refresh(); to display from framebuffer.
 
 Reference

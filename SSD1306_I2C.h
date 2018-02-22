@@ -16,7 +16,7 @@ class SSD1306_I2C {
 		unsigned int GetPixel(const unsigned int uiX, const unsigned int uiY);
 		unsigned char GetSeg(const unsigned int uiX, const unsigned int uiSegNo);
 		void SetSeg(const unsigned int uiX, const unsigned int uiSegNo, const unsigned char ucPattern);
-		void SetPixel(const unsigned int uiX, const unsigned int uiY, const unsigned int uiColor);
+		void DrawPixel(const unsigned int uiX, const unsigned int uiY, const unsigned int uiColor);
 
 		unsigned char IsReverse(void);
 		void SetReverse(const unsigned char ucEnable);
