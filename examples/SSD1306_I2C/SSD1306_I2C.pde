@@ -24,7 +24,11 @@ void DisplayImage(class SSD1306_I2C* poDisplay, const int iX, const int iY, cons
   for(uiY = 0; uiY < ptImage->uiHeight; uiY++) {
     for(uiX = 0; uiX < ptImage->uiWidth; uiX++) {
       if(uiX % 8 == 0) {
+#ifdef __AVR__
         uiByteX = pgm_read_byte_near(ptImage->pucImageData + uiY * uiLineSize + uiX / 8);
+#else
+        uiByteX = ptImage->pucImageData[uiY * uiLineSize + uiX / 8];
+#endif
       }
       uiColor = (uiByteX & 1 << (7 - (uiX % 8))) ? 1 : 0;
       poDisplay->DrawPixel(iX + uiX, iY + uiY, uiColor);
@@ -37,9 +41,7 @@ void setup() {
 
   oMyDisplay.Clear();
   DisplayImage(&oMyDisplay, 0, 0, &tImageLala);
-#ifdef SSD1306_I2C_ENABLE_FRAMEBUFFER
   oMyDisplay.Refresh();
-#endif
 }
 
 void loop() {
