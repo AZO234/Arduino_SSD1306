@@ -167,6 +167,51 @@ void SSD1306_I2C::Refresh(void) {
 	}
 }
 
+void SSD1306_I2C::HScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage) {
+	if(ucStartPage > this->uiMaxY / 8 || ucEndPage > this->uiMaxY / 8 || ucIntreval > 8) {
+		return;
+	}
+
+	Wire.beginTransmission(OLED_ADDR);
+	Wire.write(B00000000); //control byte, Co bit = 0 (continue), D/C# = 0 (command)
+		Wire.write(0x2E); //For configuration, once off the scroll.
+		if(ucReverse) {
+			Wire.write(0x27); //Horizontal scroll set. 0x27=Reverse direction.
+		} else {
+			Wire.write(0x26); //Horizontal scroll set.
+		}
+			Wire.write(0x00); //Dummy byte
+			Wire.write(ucStartPage); //Define start page address.
+			Wire.write(ucIntreval); //Set time interval pattern.
+			Wire.write(ucEndPage); //Define end page address.
+			Wire.write(0x00); //Dummy byte
+			Wire.write(0xff); //Dummy byte
+		Wire.write(0x2F); //Activate scroll
+	Wire.endTransmission();
+}
+  
+void SSD1306_I2C::VHScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage, const ucOffset) {
+	if(ucStartPage > this->uiMaxY / 8 || ucEndPage > this->uiMaxY / 8 || ucIntreval > 8) {
+		return;
+	}
+
+	Wire.beginTransmission(OLED_ADDR);
+	Wire.write(B00000000); //control byte, Co bit = 0 (continue), D/C# = 0 (command)
+		Wire.write(0x2E); //For configuration, once off the scroll.
+		if(ucReverse) {
+			Wire.write(0x29);
+		} else {
+			Wire.write(0x2A);
+		}
+			Wire.write(0x00); //Dummy byte
+			Wire.write(ucStartPage); //Define start page address.
+			Wire.write(ucIntreval);  //Set time interval pattern.
+			Wire.write(ucEndPage);   //Define end page address.
+			Wire.write(ucOffset);    //Vertical scrolling offset.
+		Wire.write(0x2F); //Activate scroll
+	Wire.endTransmission();
+}
+
 unsigned char SSD1306_I2C::IsSleep(void) {
 	return this->ucSleep;
 }
