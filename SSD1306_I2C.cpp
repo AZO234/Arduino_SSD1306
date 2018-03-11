@@ -167,7 +167,7 @@ void SSD1306_I2C::Refresh(void) {
 	}
 }
 
-void SSD1306_I2C::HScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage) {
+void SSD1306_I2C::HScroll(const unsigned char ucReverse, const unsigned char ucStartPage, const unsigned char ucIntreval, const unsigned char ucEndPage) {
 	if(ucStartPage > this->uiMaxY / 8 || ucEndPage > this->uiMaxY / 8 || ucIntreval > 8) {
 		return;
 	}
@@ -190,7 +190,7 @@ void SSD1306_I2C::HScroll(const ucReverse, const ucStartPage, const ucIntreval, 
 	Wire.endTransmission();
 }
   
-void SSD1306_I2C::VHScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage, const ucOffset) {
+void SSD1306_I2C::VHScroll(const unsigned char ucReverse, const unsigned char ucStartPage, const unsigned char ucIntreval, const unsigned char ucEndPage, const unsigned char ucOffset) {
 	if(ucStartPage > this->uiMaxY / 8 || ucEndPage > this->uiMaxY / 8 || ucIntreval > 8) {
 		return;
 	}
