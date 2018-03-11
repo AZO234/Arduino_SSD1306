@@ -24,6 +24,7 @@ class SSD1306_I2C {
 
 		void HScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage);
 		void VHScroll(const ucReverse, const ucStartPage, const ucIntreval, const ucEndPage, const ucOffset);
+		void ScrollOff(void);
 
 		unsigned char IsSleep(void);
 		void Sleep(void);

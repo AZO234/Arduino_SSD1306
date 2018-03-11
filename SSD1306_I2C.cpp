@@ -172,7 +172,7 @@ void SSD1306_I2C::HScroll(const ucReverse, const ucStartPage, const ucIntreval, 
 		return;
 	}
 
-	Wire.beginTransmission(OLED_ADDR);
+	Wire.beginTransmission(this->ucI2CAddress);
 	Wire.write(B00000000); //control byte, Co bit = 0 (continue), D/C# = 0 (command)
 		Wire.write(0x2E); //For configuration, once off the scroll.
 		if(ucReverse) {
@@ -195,7 +195,7 @@ void SSD1306_I2C::VHScroll(const ucReverse, const ucStartPage, const ucIntreval,
 		return;
 	}
 
-	Wire.beginTransmission(OLED_ADDR);
+	Wire.beginTransmission(this->ucI2CAddress);
 	Wire.write(B00000000); //control byte, Co bit = 0 (continue), D/C# = 0 (command)
 		Wire.write(0x2E); //For configuration, once off the scroll.
 		if(ucReverse) {
@@ -209,6 +209,13 @@ void SSD1306_I2C::VHScroll(const ucReverse, const ucStartPage, const ucIntreval,
 			Wire.write(ucEndPage);   //Define end page address.
 			Wire.write(ucOffset);    //Vertical scrolling offset.
 		Wire.write(0x2F); //Activate scroll
+	Wire.endTransmission();
+}
+
+void SSD1306_I2C::ScrollOff(void) {
+	Wire.beginTransmission(this->ucI2CAddress);
+	Wire.write(B00000000); //control byte, Co bit = 0 (continue), D/C# = 0 (command)
+		Wire.write(0x2E); //For configuration, once off the scroll.
 	Wire.endTransmission();
 }
 
