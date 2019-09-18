@@ -1,5 +1,5 @@
 #######################################
-# Syntax Coloring Map For SSD1306_I2C
+# Syntax Coloring Map For SSD1306_I2C/SPI
 #######################################
 
 #######################################
@@ -7,28 +7,36 @@
 #######################################
 
 SSD1306_I2C	KEYWORD1
+SSD1306_SPI	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-Initialize	KEYWORD2
-GetMaxX	KEYWORD2
-GetMaxY	KEYWORD2
-Clear	KEYWORD2
-GetPixel	KEYWORD2
-GetSeg	KEYWORD2
-SetSeg	KEYWORD2
-DrawPixel	KEYWORD2
-IsReverse	KEYWORD2
-SetReverse	KEYWORD2
-Refresh	KEYWORD2
+initialize	KEYWORD2
+initDevice	KEYWORD2
+clear	KEYWORD2
+getI2CAddress	KEYWORD2
+getCS	KEYWORD2
+getRD	KEYWORD2
+getRST	KEYWORD2
+getPixel	KEYWORD2
+getSeg	KEYWORD2
+setSeg	KEYWORD2
+drawPixel	KEYWORD2
+drawLine	KEYWORD2
+drawRectangle	KEYWORD2
+drawCircle	KEYWORD2
+isInvert	KEYWORD2
+setInvert	KEYWORD2
+refresh	KEYWORD2
+isScroll	KEYWORD2
 HScroll	KEYWORD2
 VHScroll	KEYWORD2
-ScrollOff	KEYWORD2
-IsSleep	KEYWORD2
-Sleep	KEYWORD2
-Wakeup	KEYWORD2
+disableScroll	KEYWORD2
+isSleep	KEYWORD2
+sleep	KEYWORD2
+wakeup	KEYWORD2
 
 #######################################
 # Instances (KEYWORD2)

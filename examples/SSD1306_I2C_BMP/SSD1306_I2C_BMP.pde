@@ -1,6 +1,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#if defined(__AVR__)
+#include <avr/pgmspace.h>
+#elif defined(ESP8266)
+#include <pgmspace.h>
+#else
+#define PROGMEM
+#endif
+
 //#define SSD1306_I2C_USE_TINYWIREM
 
 #if !defined(SSD1306_I2C_USE_TINYWIREM)
@@ -10,6 +18,9 @@
 #endif  /* SSD1306_I2C_USE_TINYWIREM */
 
 #include <ssd1306_i2c.h>
+#include "bmp.h"
+
+extern BMP_t tLala;
 
 void* pLock = NULL;
 
@@ -42,7 +53,34 @@ static void SSD1306_I2C_EndTransmission(void) {
 static void SSD1306_I2C_MemoryBarrier(void) {
 }
 
-static uint16_t u16DrawCount = 0;
+void DisplayImage(SSD1306_I2C* poDisplay, const int8_t i8X, const int8_t i8Y, const BMP_t* ptImage) {
+  uint8_t u8X, u8Y, u8LineSize, u8Color;
+  uint8_t u8ByteX;
+
+  if(poDisplay && ptImage) {
+    if(ptImage->u32Width % 8 == 0) {
+      u8LineSize = ptImage->u32Width / 8;
+    } else {
+      u8LineSize = ptImage->u32Width / 8 + 1;
+    }
+
+    for(u8Y = 0; u8Y < ptImage->u32Height; u8Y++) {
+      for(u8X = 0; u8X < ptImage->u32Width; u8X++) {
+        if(u8X % 8 == 0) {
+#if defined(__AVR__)
+          u8ByteX = pgm_read_byte_near(ptImage->pu8ImageData + u8Y * u8LineSize + u8X / 8);
+#elif defined(ESP8266)
+          memcpy_P(&u8ByteX, &ptImage->pu8ImageData[u8Y * u8LineSize + u8X / 8], 1);
+#else
+          u8ByteX = ptImage->pu8ImageData[u8Y * u8LineSize + u8X / 8];
+#endif
+        }
+        u8Color = (u8ByteX & 1 << (7 - (u8X % 8))) ? 1 : 0;
+        poDisplay->drawPixel(i8X + u8X, i8Y + u8Y, u8Color);
+      }
+    }
+  }
+}
 
 void setup() {
   oMyDisplay.initialize(
@@ -59,64 +97,10 @@ void setup() {
 
   oMyDisplay.initDevice();
   oMyDisplay.clear();
+  DisplayImage(&oMyDisplay, 0, 0, &tLala);
+  oMyDisplay.refresh();
 }
 
 void loop() {
-  switch(0) {
-  case 0:
-    oMyDisplay.drawPixel(
-      random(128), random(64),
-      random(2)
-    );
-    break;
-  case 1:
-    oMyDisplay.drawLine(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
-      random(2)
-    );
-    break;
-  case 2:
-    oMyDisplay.drawRectangle(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
-      random(2),
-      false,
-      0
-    );
-    break;
-  case 3:
-    oMyDisplay.drawRectangle(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
-      random(2),
-      true,
-      random(2)
-    );
-    break;
-  case 4:
-    oMyDisplay.drawCircle(
-      random(256) - 64, random(128) - 32,
-      random(64),
-      random(2),
-      false,
-      0
-    );
-    break;
-  case 5:
-    oMyDisplay.drawCircle(
-      random(256) - 64, random(128) - 32,
-      random(64),
-      random(2),
-      true,
-      random(2)
-    );
-    break;
-  }
-
-  u16DrawCount++;
-  if(u16DrawCount % 25 == 0) {
-    oMyDisplay.refresh();
-  }
 }
 
