@@ -89,7 +89,7 @@ void setup() {
     SSD1306_I2C_EndTransmission,
     SSD1306_I2C_MemoryBarrier,
     &pLock,
-    0x3C, 128, 64, 0xFF, true
+    0x3C, 128, 64, 0xFF
   );
 
   Wire.begin();

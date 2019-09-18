@@ -3,6 +3,12 @@
 
 /* SSD1306 Driver by AZO */
 
+#define SSD1306_FRAMEBUFFER_STATIC
+
+#ifdef SSD1306_FRAMEBUFFER_STATIC
+#define SSD1306_FRAMEBUFFER_SIZE (128*8)
+#endif /* SSD1306_FRAMEBUFFER_STATIC */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -35,7 +41,11 @@ typedef struct SSD1306_t_ {
   uint8_t u8MaxX;
   uint8_t u8MaxY;
   uint8_t u8Contrast;
+#ifdef SSD1306_FRAMEBUFFER_STATIC
+  uint8_t au8FrameBuffer[SSD1306_FRAMEBUFFER_SIZE];
+#else
   uint8_t* pu8FrameBuffer;
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
   bool bSleep;
   bool bScroll;
   bool bInvert;
@@ -53,10 +63,11 @@ bool SSD1306_Initialize(
   void** ppLock,
   const uint8_t u8MaxX,
   const uint8_t u8MaxY,
-  const uint8_t u8Contrast,
-  const bool bFrameBuffer
+  const uint8_t u8Contrast
 );
+#ifndef SSD1306_FRAMEBUFFER_STATIC
 bool SSD1306_Destroy(SSD1306_t* ptSSD1306);
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
 bool SSD1306_InitDevice(SSD1306_t* ptSSD1306);
 bool SSD1306_SetContrast(SSD1306_t* ptSSD1306, const uint8_t u8Contrast);
 

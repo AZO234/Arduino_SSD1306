@@ -12,7 +12,9 @@ typedef void (*SSD1306_I2C_EndTransmission_t)(void);
 class SSD1306_I2C {
 public:
   SSD1306_I2C(void);
+#ifndef SSD1306_FRAMEBUFFER_STATIC
   ~SSD1306_I2C(void);
+#endif /* SSD1306_FRAMEBUFFER_STATIC */
 
   /* MaxX and MaxY must be multiples of 8 */
   bool initialize(
@@ -24,8 +26,7 @@ public:
     const uint8_t u8I2CAddress,
     const uint8_t u8MaxX,
     const uint8_t u8MaxY,
-    const uint8_t u8Contrast,
-    const bool bFrameBuffer
+    const uint8_t u8Contrast
   );
   bool initDevice(void);
 

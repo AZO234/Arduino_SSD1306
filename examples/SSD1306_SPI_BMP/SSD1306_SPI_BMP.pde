@@ -87,7 +87,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9, 8, 128, 64, 0xFF, true
+    10, 9, 8, 128, 64, 0xFF
   );
 #else
   oMyDisplay.initialize(
@@ -97,7 +97,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9,    128, 64, 0xFF, true
+    10, 9,    128, 64, 0xFF
   );
 #endif
 

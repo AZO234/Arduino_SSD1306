@@ -6,9 +6,11 @@
 SSD1306_SPI::SSD1306_SPI(void) {
 }
 
+#ifndef SSD1306_FRAMEBUFFER_STATIC
 SSD1306_SPI::~SSD1306_SPI(void) {
   SSD1306_Destroy(&this->tSSD1306);
 }
+#endif /* SSD1306_FRAMEBUFFER_STATIC */
 
 bool SSD1306_SPI::initialize(
   const SSD1306_SPI_SetPinIO_t  tSetPinIO,
@@ -24,8 +26,7 @@ bool SSD1306_SPI::initialize(
 #endif
   const uint8_t u8MaxX,
   const uint8_t u8MaxY,
-  const uint8_t u8Contrast,
-  const bool bFrameBuffer
+  const uint8_t u8Contrast
 ) {
   bool bValid = false;
 
@@ -79,8 +80,7 @@ bool SSD1306_SPI::initialize(
       ppLock,
       u8MaxX,
       u8MaxY,
-      u8Contrast,
-      bFrameBuffer
+      u8Contrast
     );
   }
 

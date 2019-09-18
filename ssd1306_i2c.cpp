@@ -6,9 +6,11 @@
 SSD1306_I2C::SSD1306_I2C(void) {
 }
 
+#ifndef SSD1306_FRAMEBUFFER_STATIC
 SSD1306_I2C::~SSD1306_I2C(void) {
   SSD1306_Destroy(&this->tSSD1306);
 }
+#endif /* SSD1306_FRAMEBUFFER_STATIC */
 
 bool SSD1306_I2C::initialize(
   const SSD1306_I2C_BeginTransmission_t tBeginTransmission,
@@ -19,8 +21,7 @@ bool SSD1306_I2C::initialize(
   const uint8_t u8I2CAddress,
   const uint8_t u8MaxX,
   const uint8_t u8MaxY,
-  const uint8_t u8Contrast,
-  const bool bFrameBuffer
+  const uint8_t u8Contrast
 ) {
   bool bValid = false;
 
@@ -45,8 +46,7 @@ bool SSD1306_I2C::initialize(
       ppLock,
       u8MaxX,
       u8MaxY,
-      u8Contrast,
-      bFrameBuffer
+      u8Contrast
     );
   }
 

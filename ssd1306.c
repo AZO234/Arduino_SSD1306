@@ -1,6 +1,8 @@
 /* SSD1306 Driver by AZO */
 
+#ifndef SSD1306_FRAMEBUFFER_STATIC
 #include <stdlib.h>
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
 #include <string.h>
 #include "ssd1306.h"
 
@@ -30,20 +32,18 @@ bool SSD1306_Initialize(
   void** ppLock,
   const uint8_t u8MaxX,
   const uint8_t u8MaxY,
-  const uint8_t u8Contrast,
-  const bool bFrameBuffer
+  const uint8_t u8Contrast
 ) {
   bool bValid = false;
 
   if(ptSSD1306 && pInstance && tWrite && tMemoryBarrier && ppLock && u8MaxX > 0 && u8MaxY > 0) {
     bValid = true;
-    ptSSD1306->pu8FrameBuffer = NULL;
-    if(bFrameBuffer) {
-      ptSSD1306->pu8FrameBuffer = malloc(u8MaxY * u8MaxX / 8);
-      if(!ptSSD1306->pu8FrameBuffer) {
-        bValid = false;
-      }
+#ifndef SSD1306_FRAMEBUFFER_STATIC
+    ptSSD1306->pu8FrameBuffer = malloc(u8MaxY * u8MaxX / 8);
+    if(!ptSSD1306->pu8FrameBuffer) {
+      bValid = false;
     }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
     if(bValid) {
       ptSSD1306->pInstance          = pInstance;
       ptSSD1306->tBeginTransmission = tBeginTransmission;
@@ -64,6 +64,7 @@ bool SSD1306_Initialize(
   return bValid;
 }
 
+#ifndef SSD1306_FRAMEBUFFER_STATIC
 bool SSD1306_Destroy(SSD1306_t* ptSSD1306) {
   bool bValid = false;
 
@@ -77,6 +78,7 @@ bool SSD1306_Destroy(SSD1306_t* ptSSD1306) {
 
   return bValid;
 }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
 
 bool SSD1306_InitDevice(SSD1306_t* ptSSD1306) {
   bool bValid = false;
@@ -217,6 +219,7 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
 
   if(ptSSD1306) {
     bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
       memset(ptSSD1306->pu8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
     } else {
@@ -258,6 +261,9 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
         }
       }
     }
+#else
+    memset(ptSSD1306->au8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
   return bValid;
@@ -269,16 +275,20 @@ bool SSD1306_GetPixel(uint8_t* pu8Pixel, const SSD1306_t* ptSSD1306, const uint8
 
   if(pu8Pixel && ptSSD1306) {
     bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
       if(u8X < ptSSD1306->u8MaxX && u8Y < ptSSD1306->u8MaxY) {
         bValid = SSD1306_GetSeg(&u8Pattern, ptSSD1306, u8X, u8Y / 8);
         if(bValid) {
           *pu8Pixel = ((u8Pattern >> (u8Y % 8)) & 0x1);
         }
       }
+#ifndef SSD1306_FRAMEBUFFER_STATIC
     } else {
       *pu8Pixel = 0;
     }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
   return bValid;
@@ -289,6 +299,7 @@ bool SSD1306_GetSeg(uint8_t* pu8Pattern, const SSD1306_t* ptSSD1306, const uint8
 
   if(pu8Pattern && ptSSD1306) {
     bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
       if(u8Seg < ptSSD1306->u8MaxX && u8Page < ptSSD1306->u8MaxY / 8) {
         *pu8Pattern = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
@@ -296,6 +307,11 @@ bool SSD1306_GetSeg(uint8_t* pu8Pattern, const SSD1306_t* ptSSD1306, const uint8
     } else {
       *pu8Pattern = 0;
     }
+#else
+    if(u8Seg < ptSSD1306->u8MaxX && u8Page < ptSSD1306->u8MaxY / 8) {
+      *pu8Pattern = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
+    }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
   return bValid;
@@ -306,6 +322,7 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
 
   if(ptSSD1306 && u8Seg < ptSSD1306->u8MaxX && u8Page < ptSSD1306->u8MaxY / 8) {
     bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
       ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
     } else {
@@ -341,6 +358,9 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
       }
       Unlock(ptSSD1306);
     }
+#else
+    ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
   return bValid;
@@ -353,7 +373,9 @@ bool SSD1306_DrawPixel(SSD1306_t* ptSSD1306, const int16_t i16X, const int16_t i
   if(ptSSD1306) {
     bValid = true;
     if(i16X >= 0 && i16X < ptSSD1306->u8MaxX && i16Y >= 0 && i16Y < ptSSD1306->u8MaxY) {
+#ifndef SSD1306_FRAMEBUFFER_STATIC
       if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
         SSD1306_GetSeg(&u8Pattern, ptSSD1306, i16X, i16Y / 8);
         if(u8Color) {
           u8Pattern |=   1 << (i16Y % 8) ;
@@ -361,9 +383,11 @@ bool SSD1306_DrawPixel(SSD1306_t* ptSSD1306, const int16_t i16X, const int16_t i
           u8Pattern &= ~(1 << (i16Y % 8));
         }
         SSD1306_SetSeg(ptSSD1306, i16X, i16Y / 8, u8Pattern);
+#ifndef SSD1306_FRAMEBUFFER_STATIC
       } else {
         SSD1306_SetSeg(ptSSD1306, i16X, i16Y / 8, u8Color ? 0xFF : 0x00);
       }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
     }
   }
 
@@ -717,7 +741,9 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
   if(ptSSD1306) {
     if(ptSSD1306->tWrite) {
       bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
       if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
         for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
           Lock(ptSSD1306);
           if(ptSSD1306->tBeginTransmission) {
@@ -742,7 +768,11 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
           ptSSD1306->tWriteData.bData = true;
           for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg += 16) {  /* column = 8Byte x 16 */
             for(u8Count = 0; u8Count < 16; u8Count++) {             /* continue to 31Byte (this use 16Byte) */
+#ifndef SSD1306_FRAMEBUFFER_STATIC
               ptSSD1306->tWriteData.au8Data[u8Count] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
+#else
+              ptSSD1306->tWriteData.au8Data[u8Count] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
               if(ptSSD1306->bInvert) {
                 ptSSD1306->tWriteData.au8Data[u8Count] = ~ptSSD1306->tWriteData.au8Data[u8Count];
               } else {
@@ -760,7 +790,9 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
             Unlock(ptSSD1306);
           }
         }
+#ifndef SSD1306_FRAMEBUFFER_STATIC
       }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
     }
   }
 
