@@ -14,6 +14,9 @@
 #include <ssd1306_spi.h>
 #include "bmp.h"
 
+#define SSD1306_SPI_WIDTH   128
+#define SSD1306_SPI_HEIGHT  64
+
 extern BMP_t tLala;
 
 void* pLock = NULL;
@@ -87,7 +90,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9, 8, 128, 64, 0xFF
+    10, 9, 8, SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
   );
 #else
   oMyDisplay.initialize(
@@ -97,7 +100,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9,    128, 64, 0xFF
+    10, 9,    SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
   );
 #endif
 

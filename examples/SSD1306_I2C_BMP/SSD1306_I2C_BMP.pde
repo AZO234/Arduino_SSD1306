@@ -20,6 +20,9 @@
 #include <ssd1306_i2c.h>
 #include "bmp.h"
 
+#define SSD1306_I2C_WIDTH   128
+#define SSD1306_I2C_HEIGHT  64
+
 extern BMP_t tLala;
 
 void* pLock = NULL;
@@ -89,7 +92,7 @@ void setup() {
     SSD1306_I2C_EndTransmission,
     SSD1306_I2C_MemoryBarrier,
     &pLock,
-    0x3C, 128, 64, 0xFF
+    0x3C, SSD1306_I2C_WIDTH, SSD1306_I2C_HEIGHT, 0xFF
   );
 
   Wire.begin();

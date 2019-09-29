@@ -7,6 +7,9 @@
 
 void* pLock = NULL;
 
+#define SSD1306_SPI_WIDTH   128
+#define SSD1306_SPI_HEIGHT  64
+
 SSD1306_SPI oMyDisplay;
 
 static void SSD1306_SPI_SetPinIO(const uint8_t u8Pin, const uint8_t u8IOMode) {
@@ -49,7 +52,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9, 8, 128, 64, 0xFF
+    10, 9, 8, SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
   );
 #else
   oMyDisplay.initialize(
@@ -59,7 +62,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9,    128, 64, 0xFF
+    10, 9,    SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
   );
 #endif
 
@@ -74,21 +77,21 @@ void loop() {
   switch(0) {
   case 0:
     oMyDisplay.drawPixel(
-      random(128), random(64),
+      random(SSD1306_SPI_WIDTH), random(SSD1306_SPI_HEIGHT),
       random(2)
     );
     break;
   case 1:
     oMyDisplay.drawLine(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
       random(2)
     );
     break;
   case 2:
     oMyDisplay.drawRectangle(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
       random(2),
       false,
       0
@@ -96,8 +99,8 @@ void loop() {
     break;
   case 3:
     oMyDisplay.drawRectangle(
-      random(256) - 64, random(128) - 32,
-      random(256) - 64, random(128) - 32,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
       random(2),
       true,
       random(2)
@@ -105,8 +108,8 @@ void loop() {
     break;
   case 4:
     oMyDisplay.drawCircle(
-      random(256) - 64, random(128) - 32,
-      random(64),
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_SPI_HEIGHT),
       random(2),
       false,
       0
@@ -114,8 +117,8 @@ void loop() {
     break;
   case 5:
     oMyDisplay.drawCircle(
-      random(256) - 64, random(128) - 32,
-      random(64),
+      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_SPI_HEIGHT),
       random(2),
       true,
       random(2)
