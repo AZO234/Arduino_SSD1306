@@ -7,6 +7,7 @@
 
 void* pLock = NULL;
 
+/* if change this sizes, don't forget to change ssd1306.h too. */
 #define SSD1306_SPI_WIDTH   128
 #define SSD1306_SPI_HEIGHT  64
 

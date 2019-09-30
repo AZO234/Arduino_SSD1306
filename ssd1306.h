@@ -6,7 +6,9 @@
 #define SSD1306_FRAMEBUFFER_STATIC
 
 #ifdef SSD1306_FRAMEBUFFER_STATIC
+/* width * (height / 8) */
 #define SSD1306_FRAMEBUFFER_SIZE (128*8)
+//#define SSD1306_FRAMEBUFFER_SIZE (72*5)
 #endif /* SSD1306_FRAMEBUFFER_STATIC */
 
 #include <stdio.h>

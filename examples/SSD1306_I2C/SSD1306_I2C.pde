@@ -11,6 +11,7 @@
 
 #include <ssd1306_i2c.h>
 
+/* if change this sizes, don't forget to change ssd1306.h too. */
 #define SSD1306_I2C_WIDTH   128
 #define SSD1306_I2C_HEIGHT  64
 
