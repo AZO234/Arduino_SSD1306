@@ -43,6 +43,12 @@ bool SSD1306_Initialize(
     if(!ptSSD1306->pu8FrameBuffer) {
       bValid = false;
     }
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    ptSSD1306->pu8FBSegDirty = malloc(u8MaxY * u8MaxX / 64);
+    if(!ptSSD1306->pu8FBSegDirty) {
+      bValid = false;
+    }
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
     if(bValid) {
       ptSSD1306->pInstance          = pInstance;
@@ -74,6 +80,12 @@ bool SSD1306_Destroy(SSD1306_t* ptSSD1306) {
       free(ptSSD1306->pu8FrameBuffer);
       ptSSD1306->pu8FrameBuffer = NULL;
     }
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    if(ptSSD1306->pu8FBSegDirty) {
+      free(ptSSD1306->pu8FBSegDirty);
+      ptSSD1306->pu8FBSegDirty = NULL;
+    }
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
   }
 
   return bValid;
@@ -220,11 +232,16 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
   if(ptSSD1306) {
     bValid = true;
 #ifndef SSD1306_FRAMEBUFFER_STATIC
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    if(ptSSD1306->pu8FrameBuffer && ptSSD1306->pu8FBSegDirty) {
+#else  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
       memset(ptSSD1306->pu8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
       ptSSD1306->u8FBPageDirty = 0xFF;
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+      memset(ptSSD1306->pu8FBSegDirty, 0xFF, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 64);
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     } else {
       for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
         Lock(ptSSD1306);
@@ -266,9 +283,10 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
     }
 #else
     memset(ptSSD1306->au8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
     ptSSD1306->u8FBPageDirty = 0xFF;
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    memset(ptSSD1306->au8FBSegDirty, 0xFF, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 64);
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
@@ -329,11 +347,16 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
   if(ptSSD1306 && u8Seg < ptSSD1306->u8MaxX && u8Page < ptSSD1306->u8MaxY / 8) {
     bValid = true;
 #ifndef SSD1306_FRAMEBUFFER_STATIC
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    if(ptSSD1306->pu8FrameBuffer && ptSSD1306->pu8FBSegDirty) {
+#else  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
       ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
       ptSSD1306->u8FBPageDirty |= (1 << u8Page);
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+      ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] |= 1 << (u8Seg % 8);
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     } else {
       Lock(ptSSD1306);
       if(ptSSD1306->tBeginTransmission) {
@@ -369,9 +392,10 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
     }
 #else
     ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
     ptSSD1306->u8FBPageDirty |= (1 << u8Page);
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+    ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] |= 1 << (u8Seg % 8);
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
 
@@ -747,6 +771,7 @@ bool SSD1306_DrawCircle(
 }
 
 bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
+#if 1
   bool bValid = false;
   uint8_t u8Page, u8Seg, u8Count;
 
@@ -757,10 +782,8 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
       if(ptSSD1306->pu8FrameBuffer) {
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
         for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
           if(ptSSD1306->u8FBPageDirty & (1 << u8Page)) {
             ptSSD1306->u8FBPageDirty &= ~(1 << u8Page);
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
             Lock(ptSSD1306);
             if(ptSSD1306->tBeginTransmission) {
               ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
@@ -802,9 +825,7 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
               }
               Unlock(ptSSD1306);
             }
-#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
           }
-#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
         }
 #ifndef SSD1306_FRAMEBUFFER_STATIC
       }
@@ -813,6 +834,91 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
   }
 
   return bValid;
+#else
+  bool bValid = false;
+  uint8_t u8Page, u8Seg, u8Count;
+
+  if(ptSSD1306) {
+    if(ptSSD1306->tWrite) {
+      bValid = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+      if(ptSSD1306->pu8FrameBuffer && ptSSD1306->pu8FBSegDirty) {
+#else
+      if(ptSSD1306->pu8FrameBuffer) {
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
+        for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
+          if(ptSSD1306->u8FBPageDirty & (1 << u8Page)) {
+            ptSSD1306->u8FBPageDirty &= ~(1 << u8Page);
+            for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg++) {
+#ifndef SSD1306_FRAMEBUFFER_STATIC
+              if(ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8]) {
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+                if(ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] & (1 << (u8Seg % 8))) {
+                  ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] &= ~(1 << (u8Seg % 8));
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
+#else  /* SSD1306_FRAMEBUFFER_STATIC */
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+              if(ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8]) {
+                if(ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] & (1 << (u8Seg % 8))) {
+                  ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] &= ~(1 << (u8Seg % 8));
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
+                  Lock(ptSSD1306);
+                  if(ptSSD1306->tBeginTransmission) {
+                    ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
+                  }
+#if 0
+                  ptSSD1306->tWriteData.u8Count = 7;
+                  ptSSD1306->tWriteData.bData = false;
+                  ptSSD1306->tWriteData.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
+                  ptSSD1306->tWriteData.au8Data[1] = 0x21;  /* set Column Address */
+                  ptSSD1306->tWriteData.au8Data[2] = u8Seg;
+                  ptSSD1306->tWriteData.au8Data[3] = u8Seg;
+                  ptSSD1306->tWriteData.au8Data[4] = 0x22;  /* set Row Address */
+                  ptSSD1306->tWriteData.au8Data[5] = u8Page;
+                  ptSSD1306->tWriteData.au8Data[6] = u8Page;
+#else
+                  ptSSD1306->tWriteData.u8Count = 6;
+                  ptSSD1306->tWriteData.bData = false;
+                  ptSSD1306->tWriteData.au8Data[0] = 0x21;  /* set Column Address */
+                  ptSSD1306->tWriteData.au8Data[1] = u8Seg;
+                  ptSSD1306->tWriteData.au8Data[2] = u8Seg;
+                  ptSSD1306->tWriteData.au8Data[3] = 0x22;  /* set Row Address */
+                  ptSSD1306->tWriteData.au8Data[4] = u8Page;
+                  ptSSD1306->tWriteData.au8Data[5] = u8Page;
+#endif
+                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
+                  ptSSD1306->tWriteData.u8Count = 1;
+                  ptSSD1306->tWriteData.bData = true;
+#ifndef SSD1306_FRAMEBUFFER_STATIC
+                  ptSSD1306->tWriteData.au8Data[0] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
+#else  /* SSD1306_FRAMEBUFFER_STATIC */
+                  ptSSD1306->tWriteData.au8Data[0] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
+                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
+                  if(ptSSD1306->tEndTransmission) {
+                    ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
+                  }
+                  Unlock(ptSSD1306);
+                }
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+              } else {
+                u8Seg += 7;
+              }
+            }
+#endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
+          }
+        }
+#ifndef SSD1306_FRAMEBUFFER_STATIC
+      }
+#endif  /* SSD1306_FRAMEBUFFER_STATIC */
+    }
+  }
+
+  return bValid;
+#endif
 }
 
 bool SSD1306_HScroll(SSD1306_t* ptSSD1306, const bool bLeft, const uint8_t u8StartPage, const uint8_t u8Intreval, const uint8_t u8EndPage) {

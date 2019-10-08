@@ -42,8 +42,6 @@ static void SSD1306_SPI_DelayMS(const uint16_t u16MS) {
 static void SSD1306_SPI_MemoryBarrier(void) {
 }
 
-static uint16_t u16DrawCount = 0;
-
 void setup() {
 #if SSD1306_SPI_WIRE == 4
   oMyDisplay.initialize(
@@ -127,9 +125,6 @@ void loop() {
     break;
   }
 
-  u16DrawCount++;
-  if(u16DrawCount % 25 == 0) {
-    oMyDisplay.refresh();
-  }
+  oMyDisplay.refresh();
 }
 

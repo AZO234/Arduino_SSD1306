@@ -46,8 +46,6 @@ static void SSD1306_I2C_EndTransmission(void) {
 static void SSD1306_I2C_MemoryBarrier(void) {
 }
 
-static uint16_t u16DrawCount = 0;
-
 void setup() {
   oMyDisplay.initialize(
     SSD1306_I2C_BeginTransmission,
@@ -122,9 +120,6 @@ void loop() {
     break;
   }
 
-  u16DrawCount++;
-  if(u16DrawCount % 25 == 0) {
-    oMyDisplay.refresh();
-  }
+  oMyDisplay.refresh();
 }
 
