@@ -49,7 +49,7 @@ typedef struct SSD1306_t_ {
 #else
   uint8_t* pu8FrameBuffer;
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
   uint8_t u8FBPageDirty;
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
   bool bSleep;

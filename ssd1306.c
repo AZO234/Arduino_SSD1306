@@ -222,7 +222,7 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
 #ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
       memset(ptSSD1306->pu8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
       ptSSD1306->u8FBPageDirty = 0xFF;
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
     } else {
@@ -266,7 +266,7 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
     }
 #else
     memset(ptSSD1306->au8FrameBuffer, 0, ptSSD1306->u8MaxY * ptSSD1306->u8MaxX / 8);
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
     ptSSD1306->u8FBPageDirty = 0xFF;
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
@@ -331,7 +331,7 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
 #ifndef SSD1306_FRAMEBUFFER_STATIC
     if(ptSSD1306->pu8FrameBuffer) {
       ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
       ptSSD1306->u8FBPageDirty |= (1 << u8Page);
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
     } else {
@@ -369,7 +369,7 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
     }
 #else
     ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
     ptSSD1306->u8FBPageDirty |= (1 << u8Page);
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
@@ -757,7 +757,7 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
       if(ptSSD1306->pu8FrameBuffer) {
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
         for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
           if(ptSSD1306->u8FBPageDirty & (1 << u8Page)) {
             ptSSD1306->u8FBPageDirty &= ~(1 << u8Page);
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
@@ -802,7 +802,7 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
               }
               Unlock(ptSSD1306);
             }
-#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+#ifdef SSD1306_FRAMEBUFFER_PAGEDIRTY
           }
 #endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
         }
