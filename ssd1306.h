@@ -4,6 +4,7 @@
 /* SSD1306 Driver by AZO */
 
 #define SSD1306_FRAMEBUFFER_STATIC
+#define SSD1306_FRAMEBUFFER_PAGEDIRTY
 
 #ifdef SSD1306_FRAMEBUFFER_STATIC
 /* width * (height / 8) */
@@ -48,6 +49,9 @@ typedef struct SSD1306_t_ {
 #else
   uint8_t* pu8FrameBuffer;
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
+#ifndef SSD1306_FRAMEBUFFER_PAGEDIRTY
+  uint8_t u8FBPageDirty;
+#endif  /* SSD1306_FRAMEBUFFER_PAGEDIRTY */
   bool bSleep;
   bool bScroll;
   bool bInvert;
