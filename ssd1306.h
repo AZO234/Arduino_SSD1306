@@ -4,7 +4,7 @@
 /* SSD1306 Driver by AZO */
 
 #define SSD1306_FRAMEBUFFER_STATIC
-//#define SSD1306_FRAMEBUFFER_SEGDIRTY
+#define SSD1306_FRAMEBUFFER_SEGDIRTY
 
 #ifdef SSD1306_FRAMEBUFFER_STATIC
 /* width * (height / 8) */
@@ -27,18 +27,14 @@ typedef struct SSD1306_Write_Data_t_ {
 } SSD1306_Write_Data_t;
 
 /* Access */
-typedef void (*SSD1306_BeginTransmission_t)(void* pInstance);
 typedef uint8_t (*SSD1306_Read_t)(void* pInstance, const uint8_t u8Reg);
 typedef void (*SSD1306_Write_t)(void* pInstance, const SSD1306_Write_Data_t* ptWriteData);
-typedef void (*SSD1306_EndTransmission_t)(void* pInstance);
 typedef void (*SSD1306_MemoryBarrier_t)(void);
 
 typedef struct SSD1306_t_ {
   void* pInstance;
-  SSD1306_BeginTransmission_t tBeginTransmission;
   SSD1306_Read_t tRead;
   SSD1306_Write_t tWrite;
-  SSD1306_EndTransmission_t tEndTransmission;
   SSD1306_MemoryBarrier_t tMemoryBarrier;
   void** ppLock;
   uint8_t u8MaxX;
@@ -51,7 +47,7 @@ typedef struct SSD1306_t_ {
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #else
   uint8_t* pu8FrameBuffer;
-#ifndef SSD1306_FRAMEBUFFER_SEGDIRTY
+#ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
   uint8_t* pu8FBSegDirty;
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
@@ -59,16 +55,15 @@ typedef struct SSD1306_t_ {
   bool bSleep;
   bool bScroll;
   bool bInvert;
-  SSD1306_Write_Data_t tWriteData;
+  SSD1306_Write_Data_t tWriteCommand;
+  SSD1306_Write_Data_t tWriteSeg;
 } SSD1306_t;
 
 bool SSD1306_Initialize(
   SSD1306_t* ptSSD1306,
   void* pInstance,
-  const SSD1306_BeginTransmission_t tBeginTransmission,
   const SSD1306_Read_t tRead,
   const SSD1306_Write_t tWrite,
-  const SSD1306_EndTransmission_t tEndTransmission,
   const SSD1306_MemoryBarrier_t tMemoryBarrier,
   void** ppLock,
   const uint8_t u8MaxX,

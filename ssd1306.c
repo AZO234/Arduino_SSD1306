@@ -24,10 +24,8 @@ static void Unlock(SSD1306_t* ptSSD1306) {
 bool SSD1306_Initialize(
   SSD1306_t* ptSSD1306,
   void* pInstance,
-  SSD1306_BeginTransmission_t tBeginTransmission,
   SSD1306_Read_t tRead,
   SSD1306_Write_t tWrite,
-  SSD1306_EndTransmission_t tEndTransmission,
   SSD1306_MemoryBarrier_t tMemoryBarrier,
   void** ppLock,
   const uint8_t u8MaxX,
@@ -51,19 +49,22 @@ bool SSD1306_Initialize(
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
     if(bValid) {
-      ptSSD1306->pInstance          = pInstance;
-      ptSSD1306->tBeginTransmission = tBeginTransmission;
-      ptSSD1306->tRead              = tRead;
-      ptSSD1306->tWrite             = tWrite;
-      ptSSD1306->tEndTransmission   = tEndTransmission;
-      ptSSD1306->tMemoryBarrier     = tMemoryBarrier;
-      ptSSD1306->ppLock             = ppLock;
-      ptSSD1306->u8MaxX             = u8MaxX;
-      ptSSD1306->u8MaxY             = u8MaxY;
-      ptSSD1306->u8Contrast         = u8Contrast;
-      ptSSD1306->bSleep             = false;
-      ptSSD1306->bScroll            = false;
-      ptSSD1306->bInvert            = false;
+      ptSSD1306->pInstance      = pInstance;
+      ptSSD1306->tRead          = tRead;
+      ptSSD1306->tWrite         = tWrite;
+      ptSSD1306->tMemoryBarrier = tMemoryBarrier;
+      ptSSD1306->ppLock         = ppLock;
+      ptSSD1306->u8MaxX         = u8MaxX;
+      ptSSD1306->u8MaxY         = u8MaxY;
+      ptSSD1306->u8Contrast     = u8Contrast;
+      ptSSD1306->bSleep         = false;
+      ptSSD1306->bScroll        = false;
+      ptSSD1306->bInvert        = false;
+
+      ptSSD1306->tWriteCommand.u8Count = 0;
+      ptSSD1306->tWriteCommand.bData = false;
+      ptSSD1306->tWriteSeg.u8Count = 0;
+      ptSSD1306->tWriteSeg.bData = true;
     }
   }
 
@@ -98,100 +99,37 @@ bool SSD1306_InitDevice(SSD1306_t* ptSSD1306) {
   if(ptSSD1306) {
     if(ptSSD1306->tWrite) {
       bValid = true;
+      ptSSD1306->tWriteCommand.u8Count = 28;
+      ptSSD1306->tWriteCommand.au8Data[ 0] = 0xAE;  /* Display off */
+      ptSSD1306->tWriteCommand.au8Data[ 1] = 0xA8;  /* Set Multiplex Ratio  0xA8, 0x3F */
+      ptSSD1306->tWriteCommand.au8Data[ 2] = 0b00111111;
+      ptSSD1306->tWriteCommand.au8Data[ 3] = 0xD3;  /* Set Display Offset 0xD3, 0x00 */
+      ptSSD1306->tWriteCommand.au8Data[ 4] = 0x00;
+      ptSSD1306->tWriteCommand.au8Data[ 5] = 0x40;  /* Set Display Start Line 0x40 */
+      ptSSD1306->tWriteCommand.au8Data[ 6] = 0xA1;  /* Set Segment re-map 0xA0/0xA1 */
+      ptSSD1306->tWriteCommand.au8Data[ 7] = 0xC8;  /* Set COM Output Scan Direction 0xC0,/0xC8 */
+      ptSSD1306->tWriteCommand.au8Data[ 8] = 0xDA;  /* Set COM Pins hardware configuration 0xDA, 0x02 */
+      ptSSD1306->tWriteCommand.au8Data[ 9] = 0b00010010;
+      ptSSD1306->tWriteCommand.au8Data[10] = 0x81;  /* Set Contrast Control 0x81, default=0x7F */
+      ptSSD1306->tWriteCommand.au8Data[11] = ptSSD1306->u8Contrast;
+      ptSSD1306->tWriteCommand.au8Data[12] = 0xA4;  /* Disable Entire Display On */
+      ptSSD1306->tWriteCommand.au8Data[13] = 0xA6;  /* Set Normal Display 0xA6, Inverse display 0xA7 */
+      ptSSD1306->tWriteCommand.au8Data[14] = 0xD5;  /* Set Display Clock Divide Ratio/Oscillator Frequency 0xD5, 0x80 */
+      ptSSD1306->tWriteCommand.au8Data[15] = 0b10000000;
+      ptSSD1306->tWriteCommand.au8Data[16] = 0x2E;  /* Deactivate scroll */
+      ptSSD1306->tWriteCommand.au8Data[17] = 0x20;  /* Set Memory Addressing Mode  0x10:Page addressing mode */
+      ptSSD1306->tWriteCommand.au8Data[18] = 0x10;
+      ptSSD1306->tWriteCommand.au8Data[19] = 0x21;  /* Set Column Address Start column, End column */
+      ptSSD1306->tWriteCommand.au8Data[20] = 0;
+      ptSSD1306->tWriteCommand.au8Data[21] = ptSSD1306->u8MaxX - 1;
+      ptSSD1306->tWriteCommand.au8Data[22] = 0x22;  /* Set Page Address Start page, End page */
+      ptSSD1306->tWriteCommand.au8Data[23] = 0;
+      ptSSD1306->tWriteCommand.au8Data[24] = ptSSD1306->u8MaxY / 8 - 1;
+      ptSSD1306->tWriteCommand.au8Data[25] = 0x8D;  /* Set Enable charge pump regulator 0x8D, 0x14 */
+      ptSSD1306->tWriteCommand.au8Data[26] = 0x14;
+      ptSSD1306->tWriteCommand.au8Data[27] = 0xAF;  /* Display On */
       Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xAE;  /* Display off */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xA8;  /* Set Multiplex Ratio  0xA8, 0x3F */
-      ptSSD1306->tWriteData.au8Data[1] = 0b00111111;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xD3;  /* Set Display Offset 0xD3, 0x00 */
-      ptSSD1306->tWriteData.au8Data[1] = 0x00;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x40;  /* Set Display Start Line 0x40 */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xA1;  /* Set Segment re-map 0xA0/0xA1 */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xC8;  /* Set COM Output Scan Direction 0xC0,/0xC8 */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xDA;  /* Set COM Pins hardware configuration 0xDA, 0x02 */
-      ptSSD1306->tWriteData.au8Data[1] = 0b00010010;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x81;  /* Set Contrast Control 0x81, default=0x7F */
-      ptSSD1306->tWriteData.au8Data[1] = ptSSD1306->u8Contrast;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xA4;  /* Disable Entire Display On */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xA6;  /* Set Normal Display 0xA6, Inverse display 0xA7 */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xD5;  /* Set Display Clock Divide Ratio/Oscillator Frequency 0xD5, 0x80 */
-      ptSSD1306->tWriteData.au8Data[1] = 0b10000000;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2E;  /* Deactivate scroll */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
-      Unlock(ptSSD1306);
-      Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x20;  /* Set Memory Addressing Mode  0x10:Page addressing mode */
-      ptSSD1306->tWriteData.au8Data[1] = 0x10;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 3;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x21;  /* Set Column Address Start column, End column */
-      ptSSD1306->tWriteData.au8Data[1] = 0;
-      ptSSD1306->tWriteData.au8Data[2] = ptSSD1306->u8MaxX - 1;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 3;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x22;  /* Set Page Address Start page, End page */
-      ptSSD1306->tWriteData.au8Data[1] = 0;
-      ptSSD1306->tWriteData.au8Data[2] = ptSSD1306->u8MaxY / 8 - 1;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x8D;  /* Set Enable charge pump regulator 0x8D, 0x14 */
-      ptSSD1306->tWriteData.au8Data[1] = 0x14;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xAF;  /* Display On */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
     }
   }
@@ -206,18 +144,11 @@ bool SSD1306_SetContrast(SSD1306_t* ptSSD1306, const uint8_t u8Contrast) {
     if(ptSSD1306->tWrite) {
       bValid = true;
       ptSSD1306->u8Contrast = u8Contrast;
+      ptSSD1306->tWriteCommand.u8Count = 2;
+      ptSSD1306->tWriteCommand.au8Data[0] = 0x81;  /* Set Contrast */
+      ptSSD1306->tWriteCommand.au8Data[1] = u8Contrast;
       Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 2;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x81;  /* Set Contrast */
-      ptSSD1306->tWriteData.au8Data[1] = u8Contrast;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
     }
   }
@@ -244,39 +175,22 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     } else {
       for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
+        ptSSD1306->tWriteCommand.u8Count = 4;
+        ptSSD1306->tWriteCommand.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
+        ptSSD1306->tWriteCommand.au8Data[1] = 0x21;  /* set Column Address */
+        ptSSD1306->tWriteCommand.au8Data[2] = 0;
+        ptSSD1306->tWriteCommand.au8Data[3] = ptSSD1306->u8MaxX - 1;
         Lock(ptSSD1306);
-        if(ptSSD1306->tBeginTransmission) {
-          ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-        }
-        ptSSD1306->tWriteData.u8Count = 1;
-        ptSSD1306->tWriteData.bData = false;
-        ptSSD1306->tWriteData.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
-        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-        ptSSD1306->tWriteData.u8Count = 3;
-        ptSSD1306->tWriteData.bData = false;
-        ptSSD1306->tWriteData.au8Data[0] = 0x21;  /* set Column Address */
-        ptSSD1306->tWriteData.au8Data[1] = 0;
-        ptSSD1306->tWriteData.au8Data[2] = ptSSD1306->u8MaxX - 1;
-        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-        if(ptSSD1306->tEndTransmission) {
-          ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-        }
+        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
         Unlock(ptSSD1306);
 
-        ptSSD1306->tWriteData.u8Count = 16;
-        ptSSD1306->tWriteData.bData = true;
+        ptSSD1306->tWriteSeg.u8Count = 16;
         for(u8Count = 0; u8Count < 16; u8Count++) {
-          ptSSD1306->tWriteData.au8Data[u8Count] = ptSSD1306->bInvert ? 0xFF : 0;
+          ptSSD1306->tWriteSeg.au8Data[u8Count] = ptSSD1306->bInvert ? 0xFF : 0;
         }
         for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg += 16) {  /* column = 8Byte x 16 */
           Lock(ptSSD1306);
-          if(ptSSD1306->tBeginTransmission) {
-            ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-          }
-          ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-          if(ptSSD1306->tEndTransmission) {
-            ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-          }
+          ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
           Unlock(ptSSD1306);
         }
       }
@@ -355,46 +269,29 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
       ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
       ptSSD1306->u8FBPageDirty |= (1 << u8Page);
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
-      ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] |= 1 << (u8Seg % 8);
+      ptSSD1306->pu8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] |= 1 << (u8Seg & 0x7);
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
     } else {
+      ptSSD1306->tWriteCommand.u8Count = 4;
+      ptSSD1306->tWriteCommand.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
+      ptSSD1306->tWriteCommand.au8Data[1] = 0x21;  /* set Column Address */
+      ptSSD1306->tWriteCommand.au8Data[2] = u8Seg;
+      ptSSD1306->tWriteCommand.au8Data[3] = u8Seg;
       Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 3;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x21;  /* set Column Address */
-      ptSSD1306->tWriteData.au8Data[1] = u8Seg;
-      ptSSD1306->tWriteData.au8Data[2] = u8Seg;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
 
+      ptSSD1306->tWriteSeg.u8Count = 1;
+      ptSSD1306->tWriteSeg.au8Data[0] = ptSSD1306->bInvert ? ~u8Pattern : u8Pattern;
       Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = true;
-      ptSSD1306->tWriteData.au8Data[0] = ptSSD1306->bInvert ? ~u8Pattern : u8Pattern;
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
       Unlock(ptSSD1306);
     }
 #else
     ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg] = u8Pattern;
     ptSSD1306->u8FBPageDirty |= (1 << u8Page);
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
-    ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] |= 1 << (u8Seg % 8);
+    ptSSD1306->au8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] |= 1 << (u8Seg & 0x7);
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
   }
@@ -771,7 +668,7 @@ bool SSD1306_DrawCircle(
 }
 
 bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
-#if 1
+#if 0
   bool bValid = false;
   uint8_t u8Page, u8Seg, u8Count;
 
@@ -784,45 +681,31 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
         for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
           if(ptSSD1306->u8FBPageDirty & (1 << u8Page)) {
             ptSSD1306->u8FBPageDirty &= ~(1 << u8Page);
+            ptSSD1306->tWriteCommand.u8Count = 4;
+            ptSSD1306->tWriteCommand.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
+            ptSSD1306->tWriteCommand.au8Data[1] = 0x21;  /* set Column Address */
+            ptSSD1306->tWriteCommand.au8Data[2] = 0;
+            ptSSD1306->tWriteCommand.au8Data[3] = ptSSD1306->u8MaxX - 1;
             Lock(ptSSD1306);
-            if(ptSSD1306->tBeginTransmission) {
-              ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-            }
-            ptSSD1306->tWriteData.u8Count = 4;
-            ptSSD1306->tWriteData.bData = false;
-            ptSSD1306->tWriteData.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
-            ptSSD1306->tWriteData.au8Data[1] = 0x21;  /* set Column Address */
-            ptSSD1306->tWriteData.au8Data[2] = 0;
-            ptSSD1306->tWriteData.au8Data[3] = ptSSD1306->u8MaxX - 1;
-            ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-            if(ptSSD1306->tEndTransmission) {
-              ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-            }
+            ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
             Unlock(ptSSD1306);
 
-            ptSSD1306->tWriteData.u8Count = 16;
-            ptSSD1306->tWriteData.bData = true;
+            ptSSD1306->tWriteSeg.u8Count = 16;
             for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg += 16) {  /* column = 8Byte x 16 */
               for(u8Count = 0; u8Count < 16; u8Count++) {             /* continue to 31Byte (this use 16Byte) */
 #ifndef SSD1306_FRAMEBUFFER_STATIC
-                ptSSD1306->tWriteData.au8Data[u8Count] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
+                ptSSD1306->tWriteSeg.au8Data[u8Count] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
 #else
-                ptSSD1306->tWriteData.au8Data[u8Count] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
+                ptSSD1306->tWriteSeg.au8Data[u8Count] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg + u8Count];
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
                 if(ptSSD1306->bInvert) {
-                  ptSSD1306->tWriteData.au8Data[u8Count] = ~ptSSD1306->tWriteData.au8Data[u8Count];
+                  ptSSD1306->tWriteSeg.au8Data[u8Count] = ~ptSSD1306->tWriteSeg.au8Data[u8Count];
                 } else {
-                  ptSSD1306->tWriteData.au8Data[u8Count] =  ptSSD1306->tWriteData.au8Data[u8Count];
+                  ptSSD1306->tWriteSeg.au8Data[u8Count] =  ptSSD1306->tWriteSeg.au8Data[u8Count];
                 }
               }
               Lock(ptSSD1306);
-              if(ptSSD1306->tBeginTransmission) {
-                ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-              }
-              ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-              if(ptSSD1306->tEndTransmission) {
-                ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-              }
+              ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
               Unlock(ptSSD1306);
             }
           }
@@ -837,6 +720,9 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
 #else
   bool bValid = false;
   uint8_t u8Page, u8Seg, u8Count;
+  uint8_t u8PreSeg;
+  bool bRowFirst;
+  bool b1Seg;
 
   if(ptSSD1306) {
     if(ptSSD1306->tWrite) {
@@ -848,67 +734,119 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
       if(ptSSD1306->pu8FrameBuffer) {
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
+        ptSSD1306->tWriteSeg.u8Count = 0;
+        ptSSD1306->tWriteSeg.bData = true;
         for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
           if(ptSSD1306->u8FBPageDirty & (1 << u8Page)) {
             ptSSD1306->u8FBPageDirty &= ~(1 << u8Page);
+            bRowFirst = true;
+            u8PreSeg = 0xFE;
+            ptSSD1306->tWriteSeg.u8Count = 0;
             for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg++) {
 #ifndef SSD1306_FRAMEBUFFER_STATIC
-              if(ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8]) {
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
-                if(ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] & (1 << (u8Seg % 8))) {
-                  ptSSD1306->pu8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] &= ~(1 << (u8Seg % 8));
+              if(ptSSD1306->pu8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)]) {
+                if(ptSSD1306->pu8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] & (1 << (u8Seg & 0x7))) {
+                  ptSSD1306->pu8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] &= ~(1 << (u8Seg & 0x7));
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #else  /* SSD1306_FRAMEBUFFER_STATIC */
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
-              if(ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8]) {
-                if(ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] & (1 << (u8Seg % 8))) {
-                  ptSSD1306->au8FBSegDirty[u8Page * ptSSD1306->u8MaxX / 8 + u8Seg / 8] &= ~(1 << (u8Seg % 8));
+              if(ptSSD1306->au8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)]) {
+                if(ptSSD1306->au8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] & (1 << (u8Seg & 0x7))) {
+                  ptSSD1306->au8FBSegDirty[u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] &= ~(1 << (u8Seg & 0x7));
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
-                  Lock(ptSSD1306);
-                  if(ptSSD1306->tBeginTransmission) {
-                    ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-                  }
-#if 0
-                  ptSSD1306->tWriteData.u8Count = 7;
-                  ptSSD1306->tWriteData.bData = false;
-                  ptSSD1306->tWriteData.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
-                  ptSSD1306->tWriteData.au8Data[1] = 0x21;  /* set Column Address */
-                  ptSSD1306->tWriteData.au8Data[2] = u8Seg;
-                  ptSSD1306->tWriteData.au8Data[3] = u8Seg;
-                  ptSSD1306->tWriteData.au8Data[4] = 0x22;  /* set Row Address */
-                  ptSSD1306->tWriteData.au8Data[5] = u8Page;
-                  ptSSD1306->tWriteData.au8Data[6] = u8Page;
-#else
-                  ptSSD1306->tWriteData.u8Count = 6;
-                  ptSSD1306->tWriteData.bData = false;
-                  ptSSD1306->tWriteData.au8Data[0] = 0x21;  /* set Column Address */
-                  ptSSD1306->tWriteData.au8Data[1] = u8Seg;
-                  ptSSD1306->tWriteData.au8Data[2] = u8Seg;
-                  ptSSD1306->tWriteData.au8Data[3] = 0x22;  /* set Row Address */
-                  ptSSD1306->tWriteData.au8Data[4] = u8Page;
-                  ptSSD1306->tWriteData.au8Data[5] = u8Page;
-#endif
-                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-                  ptSSD1306->tWriteData.u8Count = 1;
-                  ptSSD1306->tWriteData.bData = true;
 #ifndef SSD1306_FRAMEBUFFER_STATIC
-                  ptSSD1306->tWriteData.au8Data[0] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
+                  ptSSD1306->tWriteSeg.au8Data[ptSSD1306->tWriteSeg.u8Count] = ptSSD1306->pu8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
 #else  /* SSD1306_FRAMEBUFFER_STATIC */
-                  ptSSD1306->tWriteData.au8Data[0] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
+                  ptSSD1306->tWriteSeg.au8Data[ptSSD1306->tWriteSeg.u8Count] = ptSSD1306->au8FrameBuffer[u8Page * ptSSD1306->u8MaxX + u8Seg];
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
-                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-                  if(ptSSD1306->tEndTransmission) {
-                    ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
+                  ptSSD1306->tWriteSeg.u8Count++;
+                  if(u8PreSeg != 0xFE && ptSSD1306->tWriteSeg.u8Count >= 30) {
+                    ptSSD1306->tWriteCommand.u8Count = 3;
+                    ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
+                    ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
+                    ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
+                    if(bRowFirst) {
+                      ptSSD1306->tWriteCommand.u8Count = 6;
+                      ptSSD1306->tWriteCommand.au8Data[3] = 0x22;  /* set Row Address */
+                      ptSSD1306->tWriteCommand.au8Data[4] = u8Page;
+                      ptSSD1306->tWriteCommand.au8Data[5] = u8Page;
+                      bRowFirst = false;
+                    }
+                    Lock(ptSSD1306);
+                    ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
+                    ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
+                    Unlock(ptSSD1306);
+                    ptSSD1306->tWriteSeg.u8Count = 0;
+                    u8PreSeg = 0xFE;
                   }
-                  Unlock(ptSSD1306);
-                }
+                  if(u8PreSeg == 0xFE) {
+                    u8PreSeg = u8Seg;
+                  }
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
+                } else {
+                  if(u8PreSeg != 0xFE && ptSSD1306->tWriteSeg.u8Count) {
+                    ptSSD1306->tWriteCommand.u8Count = 3;
+                    ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
+                    ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
+                    ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
+                    if(bRowFirst) {
+                      ptSSD1306->tWriteCommand.u8Count = 6;
+                      ptSSD1306->tWriteCommand.au8Data[3] = 0x22;  /* set Row Address */
+                      ptSSD1306->tWriteCommand.au8Data[4] = u8Page;
+                      ptSSD1306->tWriteCommand.au8Data[5] = u8Page;
+                      bRowFirst = false;
+                    }
+                    Lock(ptSSD1306);
+                    ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
+                    ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
+                    Unlock(ptSSD1306);
+                    ptSSD1306->tWriteSeg.u8Count = 0;
+                    u8PreSeg = 0xFE;
+                  }
+                }
               } else {
+                if(u8PreSeg != 0xFE && ptSSD1306->tWriteSeg.u8Count) {
+                  ptSSD1306->tWriteCommand.u8Count = 3;
+                  ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
+                  ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
+                  ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
+                  if(bRowFirst) {
+                    ptSSD1306->tWriteCommand.u8Count = 6;
+                    ptSSD1306->tWriteCommand.au8Data[3] = 0x22;  /* set Row Address */
+                    ptSSD1306->tWriteCommand.au8Data[4] = u8Page;
+                    ptSSD1306->tWriteCommand.au8Data[5] = u8Page;
+                    bRowFirst = false;
+                  }
+                  Lock(ptSSD1306);
+                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
+                  ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
+                  Unlock(ptSSD1306);
+                  ptSSD1306->tWriteSeg.u8Count = 0;
+                }
+                u8PreSeg = 0xFE;
                 u8Seg += 7;
               }
-            }
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
+            }
+            if(u8PreSeg != 0xFE && ptSSD1306->tWriteSeg.u8Count) {
+              ptSSD1306->tWriteCommand.u8Count = 3;
+              ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
+              ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
+              ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
+              if(bRowFirst) {
+                ptSSD1306->tWriteCommand.u8Count = 6;
+                ptSSD1306->tWriteCommand.au8Data[3] = 0x22;  /* set Row Address */
+                ptSSD1306->tWriteCommand.au8Data[4] = u8Page;
+                ptSSD1306->tWriteCommand.au8Data[5] = u8Page;
+                bRowFirst = false;
+              }
+              Lock(ptSSD1306);
+              ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
+              ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
+              Unlock(ptSSD1306);
+            }
           }
         }
 #ifndef SSD1306_FRAMEBUFFER_STATIC
@@ -927,32 +865,22 @@ bool SSD1306_HScroll(SSD1306_t* ptSSD1306, const bool bLeft, const uint8_t u8Sta
   if(ptSSD1306) {
     if(ptSSD1306->tWrite && u8StartPage < ptSSD1306->u8MaxY / 8 && u8EndPage < ptSSD1306->u8MaxY / 8) {
       bValid = true;
-      Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 8;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2E;         /* For configuration, once off the scroll. */
+      ptSSD1306->tWriteCommand.u8Count = 9;
+      ptSSD1306->tWriteCommand.au8Data[0] = 0x2E;         /* For configuration, once off the scroll. */
       if(bLeft) {
-        ptSSD1306->tWriteData.au8Data[1] = 0x27;       /* Horizontal scroll set. 0x26=Right/0x27=Left direction. */
+        ptSSD1306->tWriteCommand.au8Data[1] = 0x27;       /* Horizontal scroll set. 0x26=Right/0x27=Left direction. */
       } else {
-        ptSSD1306->tWriteData.au8Data[1] = 0x26;       /* Horizontal scroll set. */
+        ptSSD1306->tWriteCommand.au8Data[1] = 0x26;       /* Horizontal scroll set. */
       }
-      ptSSD1306->tWriteData.au8Data[2] = 0x00;         /* Dummy byte */
-      ptSSD1306->tWriteData.au8Data[3] = u8StartPage;  /* Define start page address. */
-      ptSSD1306->tWriteData.au8Data[4] = u8Intreval;   /* Set time interval pattern. */
-      ptSSD1306->tWriteData.au8Data[5] = u8EndPage;    /* Define end page address. */
-      ptSSD1306->tWriteData.au8Data[6] = 0x00;         /* Dummy byte */
-      ptSSD1306->tWriteData.au8Data[7] = 0xFF;         /* Dummy byte */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2F;         /* Activate scroll */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWriteCommand.au8Data[2] = 0x00;         /* Dummy byte */
+      ptSSD1306->tWriteCommand.au8Data[3] = u8StartPage;  /* Define start page address. */
+      ptSSD1306->tWriteCommand.au8Data[4] = u8Intreval;   /* Set time interval pattern. */
+      ptSSD1306->tWriteCommand.au8Data[5] = u8EndPage;    /* Define end page address. */
+      ptSSD1306->tWriteCommand.au8Data[6] = 0x00;         /* Dummy byte */
+      ptSSD1306->tWriteCommand.au8Data[7] = 0xFF;         /* Dummy byte */
+      ptSSD1306->tWriteCommand.au8Data[8] = 0x2F;         /* Activate scroll */
+      Lock(ptSSD1306);
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
       ptSSD1306->bScroll = true;
     }
@@ -967,31 +895,21 @@ bool SSD1306_VHScroll(SSD1306_t* ptSSD1306, const bool bLeft, const uint8_t u8St
   if(ptSSD1306) {
     if(ptSSD1306->tWrite && u8StartPage < ptSSD1306->u8MaxY / 8 && u8EndPage < ptSSD1306->u8MaxY / 8 && u8Intreval < 8) {
       bValid = true;
-      Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 7;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2E;         /* For configuration, once off the scroll. */
+      ptSSD1306->tWriteCommand.u8Count = 8;
+      ptSSD1306->tWriteCommand.au8Data[0] = 0x2E;         /* For configuration, once off the scroll. */
       if(bLeft) {
-        ptSSD1306->tWriteData.au8Data[1] = 0x2A;       /* Horizontal scroll set. */
+        ptSSD1306->tWriteCommand.au8Data[1] = 0x2A;       /* Horizontal scroll set. */
       } else {
-        ptSSD1306->tWriteData.au8Data[1] = 0x29;       /* Horizontal scroll set. 0x29=V+Right/0x2A=V+Left direction. */
+        ptSSD1306->tWriteCommand.au8Data[1] = 0x29;       /* Horizontal scroll set. 0x29=V+Right/0x2A=V+Left direction. */
       }
-      ptSSD1306->tWriteData.au8Data[2] = 0x00;         /* Dummy byte */
-      ptSSD1306->tWriteData.au8Data[3] = u8StartPage;  /* Define start page address. */
-      ptSSD1306->tWriteData.au8Data[4] = u8Intreval;   /* Set time interval pattern. */
-      ptSSD1306->tWriteData.au8Data[5] = u8EndPage;    /* Define end page address. */
-      ptSSD1306->tWriteData.au8Data[6] = u8Offset;     /* Vertical scrolling offset. */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2F;         /* Activate scroll */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWriteCommand.au8Data[2] = 0x00;         /* Dummy byte */
+      ptSSD1306->tWriteCommand.au8Data[3] = u8StartPage;  /* Define start page address. */
+      ptSSD1306->tWriteCommand.au8Data[4] = u8Intreval;   /* Set time interval pattern. */
+      ptSSD1306->tWriteCommand.au8Data[5] = u8EndPage;    /* Define end page address. */
+      ptSSD1306->tWriteCommand.au8Data[6] = u8Offset;     /* Vertical scrolling offset. */
+      ptSSD1306->tWriteCommand.au8Data[7] = 0x2F;         /* Activate scroll */
+      Lock(ptSSD1306);
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
       ptSSD1306->bScroll = true;
     }
@@ -1006,17 +924,10 @@ bool SSD1306_DisableScroll(SSD1306_t* ptSSD1306) {
   if(ptSSD1306) {
     if(ptSSD1306->tWrite && ptSSD1306->bScroll) {
       bValid = true;
+      ptSSD1306->tWriteCommand.u8Count = 1;
+      ptSSD1306->tWriteCommand.au8Data[0] = 0x2E;  /* For configuration, once off the scroll. */
       Lock(ptSSD1306);
-      if(ptSSD1306->tBeginTransmission) {
-        ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-      }
-      ptSSD1306->tWriteData.u8Count = 1;
-      ptSSD1306->tWriteData.bData = false;
-      ptSSD1306->tWriteData.au8Data[0] = 0x2E;  /* For configuration, once off the scroll. */
-      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-      if(ptSSD1306->tEndTransmission) {
-        ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-      }
+      ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
       ptSSD1306->bScroll = false;
     }
@@ -1032,17 +943,10 @@ bool SSD1306_Sleep(SSD1306_t* ptSSD1306) {
     if(ptSSD1306->tWrite) {
       bValid = true;
       if(!ptSSD1306->bSleep) {
+        ptSSD1306->tWriteCommand.u8Count = 1;
+        ptSSD1306->tWriteCommand.au8Data[0] = 0xAE;  /* Display Off */
         Lock(ptSSD1306);
-        if(ptSSD1306->tBeginTransmission) {
-          ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-        }
-        ptSSD1306->tWriteData.u8Count = 1;
-        ptSSD1306->tWriteData.bData = false;
-        ptSSD1306->tWriteData.au8Data[0] = 0xAE;  /* Display Off */
-        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-        if(ptSSD1306->tEndTransmission) {
-          ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-        }
+        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
         Unlock(ptSSD1306);
         ptSSD1306->bSleep = true;
       }
@@ -1059,21 +963,12 @@ bool SSD1306_Wakeup(SSD1306_t* ptSSD1306) {
     if(ptSSD1306->tWrite) {
       bValid = true;
       if(ptSSD1306->bSleep) {
+        ptSSD1306->tWriteCommand.u8Count = 3;
+        ptSSD1306->tWriteCommand.au8Data[0] = 0x81;  /* Set Contrast Control 0x81, default=0x7F */
+        ptSSD1306->tWriteCommand.au8Data[1] = ptSSD1306->u8Contrast;
+        ptSSD1306->tWriteCommand.au8Data[2] = 0xAF;  /* Display On */
         Lock(ptSSD1306);
-        if(ptSSD1306->tBeginTransmission) {
-          ptSSD1306->tBeginTransmission(ptSSD1306->pInstance);
-        }
-        ptSSD1306->tWriteData.u8Count = 2;
-        ptSSD1306->tWriteData.bData = false;
-        ptSSD1306->tWriteData.au8Data[0] = 0x81;  /* Set Contrast Control 0x81, default=0x7F */
-        ptSSD1306->tWriteData.au8Data[1] = ptSSD1306->u8Contrast;
-        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-        ptSSD1306->tWriteData.u8Count = 1;
-        ptSSD1306->tWriteData.au8Data[0] = 0xAF;  /* Display On */
-        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteData);
-        if(ptSSD1306->tEndTransmission) {
-          ptSSD1306->tEndTransmission(ptSSD1306->pInstance);
-        }
+        ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
         Unlock(ptSSD1306);
         ptSSD1306->bSleep = false;
       }

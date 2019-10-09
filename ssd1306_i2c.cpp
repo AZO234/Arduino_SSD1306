@@ -38,10 +38,8 @@ bool SSD1306_I2C::initialize(
     bValid = SSD1306_Initialize(
       &this->tSSD1306,
       this,
-      SSD1306_I2C::gen_beginTransmission,
       NULL,
       SSD1306_I2C::gen_write,
-      SSD1306_I2C::gen_endTransmission,
       tMemoryBarrier,
       ppLock,
       u8MaxX,
@@ -54,15 +52,6 @@ bool SSD1306_I2C::initialize(
 }
 
 /* Access */
-void SSD1306_I2C::gen_beginTransmission(void* pSSD1306_I2C) {
-  SSD1306_I2C* poSSD1306_I2C = (SSD1306_I2C*)pSSD1306_I2C;
-
-  if(pSSD1306_I2C) {
-    if(poSSD1306_I2C->tBeginTransmission) {
-      poSSD1306_I2C->tBeginTransmission(poSSD1306_I2C->u8I2CAddress);
-    }
-  }
-}
 
 void SSD1306_I2C::gen_write(void* pSSD1306_I2C, const SSD1306_Write_Data_t* ptWriteData) {
   uint8_t u8Count;
@@ -70,22 +59,16 @@ void SSD1306_I2C::gen_write(void* pSSD1306_I2C, const SSD1306_Write_Data_t* ptWr
 
   if(pSSD1306_I2C && ptWriteData) {
     if(
+      poSSD1306_I2C->tBeginTransmission &&
       poSSD1306_I2C->tWrite &&
+      poSSD1306_I2C->tEndTransmission &&
       ptWriteData->u8Count > 0
     ) {
+      poSSD1306_I2C->tBeginTransmission(poSSD1306_I2C->u8I2CAddress);
       poSSD1306_I2C->tWrite(ptWriteData->bData ? 0b01000000 : (ptWriteData->u8Count == 1 ? 0b10000000 : 0b00000000));
       for(u8Count = 0; u8Count < ptWriteData->u8Count; u8Count++) {
         poSSD1306_I2C->tWrite(ptWriteData->au8Data[u8Count]);
       }
-    }
-  }
-}
-
-void SSD1306_I2C::gen_endTransmission(void* pSSD1306_I2C) {
-  SSD1306_I2C* poSSD1306_I2C = (SSD1306_I2C*)pSSD1306_I2C;
-
-  if(pSSD1306_I2C) {
-    if(poSSD1306_I2C->tEndTransmission) {
       poSSD1306_I2C->tEndTransmission();
     }
   }

@@ -77,9 +77,7 @@ public:
   bool wakeup(void);
 
   /* Access (Don't use) */
-  static void gen_beginTransmission(void* pSSD1306_I2C);
   static void gen_write(void* pSSD1306_I2C, const SSD1306_Write_Data_t* ptWriteData);
-  static void gen_endTransmission(void* pSSD1306_I2C);
 
 private:
   SSD1306_t tSSD1306;
