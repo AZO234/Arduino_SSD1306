@@ -45,7 +45,6 @@ typedef struct SSD1306_t_ {
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
   uint8_t au8FBSegDirty[SSD1306_FRAMEBUFFER_SIZE / 8];
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
-#else
   uint8_t* pu8FrameBuffer;
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
   uint8_t* pu8FBSegDirty;
