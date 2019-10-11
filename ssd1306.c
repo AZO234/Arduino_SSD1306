@@ -184,7 +184,11 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
 #ifndef SSD1306_FRAMEBUFFER_STATIC
     } else {
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
-      for(u8Page = 0; u8Page < ptSSD1306->u8MaxY / 8; u8Page++) {
+      ptSSD1306->tWriteSeg.u8Count = 16;
+      for(u8Count = 0; u8Count < 16; u8Count++) {
+        ptSSD1306->tWriteSeg.au8Data[u8Count] = ptSSD1306->bInvert ? 0xFF : 0;
+      }
+      for(u8Page = 0; u8Page < ptSSD1306->u8MaxY >> 3; u8Page++) {
         ptSSD1306->tWriteCommand.u8Count = 4;
         ptSSD1306->tWriteCommand.au8Data[0] = 0xB0 | u8Page;  /* set page start address(B0～B7) */
         ptSSD1306->tWriteCommand.au8Data[1] = 0x21;  /* set Column Address */
@@ -194,10 +198,6 @@ bool SSD1306_Clear(SSD1306_t* ptSSD1306) {
         ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
         Unlock(ptSSD1306);
 
-        ptSSD1306->tWriteSeg.u8Count = 16;
-        for(u8Count = 0; u8Count < 16; u8Count++) {
-          ptSSD1306->tWriteSeg.au8Data[u8Count] = ptSSD1306->bInvert ? 0xFF : 0;
-        }
         for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg += 16) {  /* column = 8Byte x 16 */
           Lock(ptSSD1306);
           ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
@@ -272,13 +272,13 @@ bool SSD1306_SetSeg(SSD1306_t* ptSSD1306, const uint8_t u8Seg, const uint8_t u8P
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
 #endif  /* SSD1306_FRAMEBUFFER_STATIC */
       u16Loc = (uint16_t)u8Page * ptSSD1306->u8MaxX + u8Seg;
-//      if(pu8FrameBuffer[u16Loc] != u8Pattern) {
+      if(ptSSD1306->pu8FrameBuffer[u16Loc] != u8Pattern) {
         ptSSD1306->pu8FrameBuffer[u16Loc] = u8Pattern;
         ptSSD1306->u8FBPageDirty |= (1 << u8Page);
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
         ptSSD1306->pu8FBSegDirty[(uint16_t)u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3)] |= 1 << (u8Seg & 0x7);
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
-//      }
+      }
 #ifndef SSD1306_FRAMEBUFFER_STATIC
     } else {
       ptSSD1306->tWriteCommand.u8Count = 4;
@@ -755,7 +755,7 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
               } else {
                 SSD1306_Refresh_sub(ptSSD1306, u8PreSeg);
                 u8PreSeg = 0xFF;
-                u8Seg += 7;
+                u8Seg = (u8Seg & 0xF8) + 7;
               }
 #endif  /* SSD1306_FRAMEBUFFER_SEGDIRTY */
             }
