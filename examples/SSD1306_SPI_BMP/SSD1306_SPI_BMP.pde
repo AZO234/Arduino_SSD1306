@@ -14,9 +14,7 @@
 #include <ssd1306_spi.h>
 #include "bmp.h"
 
-/* if change this sizes, don't forget to change ssd1306.h too. */
-#define SSD1306_SPI_WIDTH   128
-#define SSD1306_SPI_HEIGHT  64
+/* if You wanna change Width and Height, don't forget to change ssd1306.h too. */
 
 extern BMP_t tLala;
 
@@ -91,7 +89,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9, 8, SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
+    10, 9, 8, SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 #else
   oMyDisplay.initialize(
@@ -101,7 +99,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9,    SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
+    10, 9,    SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 #endif
 

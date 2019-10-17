@@ -106,6 +106,7 @@ bool SSD1306_InitDevice(SSD1306_t* ptSSD1306) {
   if(ptSSD1306) {
     if(ptSSD1306->tWrite) {
       bValid = true;
+#ifndef SSD1306_LCD_72X40
       ptSSD1306->tWriteCommand.u8Count = 28;
       ptSSD1306->tWriteCommand.au8Data[ 0] = 0xAE;  /* Display off */
       ptSSD1306->tWriteCommand.au8Data[ 1] = 0xA8;  /* Set Multiplex Ratio  0xA8, 0x3F */
@@ -115,7 +116,7 @@ bool SSD1306_InitDevice(SSD1306_t* ptSSD1306) {
       ptSSD1306->tWriteCommand.au8Data[ 5] = 0x40;  /* Set Display Start Line 0x40 */
       ptSSD1306->tWriteCommand.au8Data[ 6] = 0xA1;  /* Set Segment re-map 0xA0/0xA1 */
       ptSSD1306->tWriteCommand.au8Data[ 7] = 0xC8;  /* Set COM Output Scan Direction 0xC0,/0xC8 */
-      ptSSD1306->tWriteCommand.au8Data[ 8] = 0xDA;  /* Set COM Pins hardware configuration 0xDA, 0x02 */
+      ptSSD1306->tWriteCommand.au8Data[ 8] = 0xDA;  /* Set COM Pins hardware configuration 0xDA, 0x12 */
       ptSSD1306->tWriteCommand.au8Data[ 9] = 0b00010010;
       ptSSD1306->tWriteCommand.au8Data[10] = 0x81;  /* Set Contrast Control 0x81, default=0x7F */
       ptSSD1306->tWriteCommand.au8Data[11] = ptSSD1306->u8Contrast;
@@ -135,6 +136,34 @@ bool SSD1306_InitDevice(SSD1306_t* ptSSD1306) {
       ptSSD1306->tWriteCommand.au8Data[25] = 0x8D;  /* Set Enable charge pump regulator 0x8D, 0x14 */
       ptSSD1306->tWriteCommand.au8Data[26] = 0x14;
       ptSSD1306->tWriteCommand.au8Data[27] = 0xAF;  /* Display On */
+#else  /* SSD1306_LCD_72X40 */
+      ptSSD1306->tWriteCommand.u8Count = 25;
+      ptSSD1306->tWriteCommand.au8Data[ 0] = 0xae;//--turn off oled panel
+      ptSSD1306->tWriteCommand.au8Data[ 1] = 0xd5;//--set display clock divide ratio/oscillator frequency
+      ptSSD1306->tWriteCommand.au8Data[ 2] = 0x80;//--set divide ratio
+      ptSSD1306->tWriteCommand.au8Data[ 3] = 0xa8;//--set multiplex ratio
+      ptSSD1306->tWriteCommand.au8Data[ 4] = 0x27;//--1/40 duty
+      ptSSD1306->tWriteCommand.au8Data[ 5] = 0xd3;//-set display offset
+      ptSSD1306->tWriteCommand.au8Data[ 6] = 0x00;//-not offset
+      ptSSD1306->tWriteCommand.au8Data[ 7] = 0xad;//--Internal IREF Setting 
+      ptSSD1306->tWriteCommand.au8Data[ 8] = 0x30;//--
+      ptSSD1306->tWriteCommand.au8Data[ 9] = 0x8d;//--set Charge Pump enable/disable
+      ptSSD1306->tWriteCommand.au8Data[10] = 0x14;//--set(0x10) disable
+      ptSSD1306->tWriteCommand.au8Data[11] = 0x40;//--set start line address
+      ptSSD1306->tWriteCommand.au8Data[12] = 0xa6;//--set normal display
+      ptSSD1306->tWriteCommand.au8Data[13] = 0xa4;//Disable Entire Display On
+      ptSSD1306->tWriteCommand.au8Data[14] = 0xa1;//--set segment re-map 128 to 0
+      ptSSD1306->tWriteCommand.au8Data[15] = 0xC8;//--Set COM Output Scan Direction 64 to 0
+      ptSSD1306->tWriteCommand.au8Data[16] = 0xda;//--set com pins hardware configuration
+      ptSSD1306->tWriteCommand.au8Data[17] = 0x12;
+      ptSSD1306->tWriteCommand.au8Data[18] = 0x81;//--set contrast control register
+      ptSSD1306->tWriteCommand.au8Data[19] = 0xaf;
+      ptSSD1306->tWriteCommand.au8Data[20] = 0xd9;//--set pre-charge period
+      ptSSD1306->tWriteCommand.au8Data[21] = 0x22;
+      ptSSD1306->tWriteCommand.au8Data[22] = 0xdb;//--set vcomh
+      ptSSD1306->tWriteCommand.au8Data[23] = 0x20;
+      ptSSD1306->tWriteCommand.au8Data[24] = 0xaf;//--turn on oled panel
+#endif  /* SSD1306_LCD_72X40 */
       Lock(ptSSD1306);
       ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
       Unlock(ptSSD1306);
@@ -674,8 +703,13 @@ static void SSD1306_Refresh_sub(SSD1306_t* ptSSD1306, const uint8_t u8PreSeg) {
   if(ptSSD1306->tWriteSeg.u8Count > 0) {
     ptSSD1306->tWriteCommand.u8Count = 3;
     ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
+#ifndef SSD1306_LCD_72X40
     ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
     ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
+#else  /* SSD1306_LCD_72X40 */
+    ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg + 0x1C;
+    ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + 0x1C + (ptSSD1306->tWriteSeg.u8Count - 1);
+#endif  /* SSD1306_LCD_72X40 */
     Lock(ptSSD1306);
     ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
     ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteSeg);
@@ -716,7 +750,6 @@ bool SSD1306_Refresh(SSD1306_t* ptSSD1306) {
             ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
             Unlock(ptSSD1306);
             u8PreSeg = 0xFF;
-            ptSSD1306->tWriteSeg.u8Count = 0;
             for(u8Seg = 0; u8Seg < ptSSD1306->u8MaxX; u8Seg++) {
 #ifdef SSD1306_FRAMEBUFFER_SEGDIRTY
               u16Loc = (uint16_t)u8Page * (ptSSD1306->u8MaxX >> 3) + (u8Seg >> 3);

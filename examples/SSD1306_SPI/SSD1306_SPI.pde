@@ -7,9 +7,7 @@
 
 void* pLock = NULL;
 
-/* if change this sizes, don't forget to change ssd1306.h too. */
-#define SSD1306_SPI_WIDTH   128
-#define SSD1306_SPI_HEIGHT  64
+/* if You wanna change Width and Height, don't forget to change ssd1306.h too. */
 
 SSD1306_SPI oMyDisplay;
 
@@ -51,7 +49,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9, 8, SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
+    10, 9, 8, SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 #else
   oMyDisplay.initialize(
@@ -61,7 +59,7 @@ void setup() {
     SSD1306_SPI_DelayMS,
     SSD1306_SPI_MemoryBarrier,
     &pLock,
-    10, 9,    SSD1306_SPI_WIDTH, SSD1306_SPI_HEIGHT, 0xFF
+    10, 9,    SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 #endif
 
@@ -76,21 +74,21 @@ void loop() {
   switch(0) {
   case 0:
     oMyDisplay.drawPixel(
-      random(SSD1306_SPI_WIDTH), random(SSD1306_SPI_HEIGHT),
+      random(SSD1306_LCD_WIDTH), random(SSD1306_LCD_HEIGHT),
       random(2)
     );
     break;
   case 1:
     oMyDisplay.drawLine(
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2)
     );
     break;
   case 2:
     oMyDisplay.drawRectangle(
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2),
       false,
       0
@@ -98,8 +96,8 @@ void loop() {
     break;
   case 3:
     oMyDisplay.drawRectangle(
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2),
       true,
       random(2)
@@ -107,8 +105,8 @@ void loop() {
     break;
   case 4:
     oMyDisplay.drawCircle(
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
-      random(SSD1306_SPI_HEIGHT),
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_HEIGHT),
       random(2),
       false,
       0
@@ -116,8 +114,8 @@ void loop() {
     break;
   case 5:
     oMyDisplay.drawCircle(
-      random(SSD1306_SPI_WIDTH * 2) - SSD1306_SPI_WIDTH / 2, random(SSD1306_SPI_HEIGHT * 2) - SSD1306_SPI_HEIGHT / 2,
-      random(SSD1306_SPI_HEIGHT),
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_HEIGHT),
       random(2),
       true,
       random(2)

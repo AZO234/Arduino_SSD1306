@@ -11,9 +11,7 @@
 
 #include <ssd1306_i2c.h>
 
-/* if change this sizes, don't forget to change ssd1306.h too. */
-#define SSD1306_I2C_WIDTH   128
-#define SSD1306_I2C_HEIGHT  64
+/* if You wanna change Width and Height, don't forget to change ssd1306.h too. */
 
 void* pLock = NULL;
 
@@ -53,7 +51,7 @@ void setup() {
     SSD1306_I2C_EndTransmission,
     SSD1306_I2C_MemoryBarrier,
     &pLock,
-    0x3C, SSD1306_I2C_WIDTH, SSD1306_I2C_HEIGHT, 0xFF
+    0x3C, SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 
 #if !defined(SSD1306_I2C_USE_TINYWIREM)
@@ -71,21 +69,21 @@ void loop() {
   switch(0) {
   case 0:
     oMyDisplay.drawPixel(
-      random(SSD1306_I2C_WIDTH), random(SSD1306_I2C_HEIGHT),
+      random(SSD1306_LCD_WIDTH), random(SSD1306_LCD_HEIGHT),
       random(2)
     );
     break;
   case 1:
     oMyDisplay.drawLine(
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2)
     );
     break;
   case 2:
     oMyDisplay.drawRectangle(
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2),
       false,
       0
@@ -93,8 +91,8 @@ void loop() {
     break;
   case 3:
     oMyDisplay.drawRectangle(
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
       random(2),
       true,
       random(2)
@@ -102,8 +100,8 @@ void loop() {
     break;
   case 4:
     oMyDisplay.drawCircle(
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
-      random(SSD1306_I2C_HEIGHT),
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_HEIGHT),
       random(2),
       false,
       0
@@ -111,8 +109,8 @@ void loop() {
     break;
   case 5:
     oMyDisplay.drawCircle(
-      random(SSD1306_I2C_WIDTH * 2) - SSD1306_I2C_WIDTH / 2, random(SSD1306_I2C_HEIGHT * 2) - SSD1306_I2C_HEIGHT / 2,
-      random(SSD1306_I2C_HEIGHT),
+      random(SSD1306_LCD_WIDTH * 2) - SSD1306_LCD_WIDTH / 2, random(SSD1306_LCD_HEIGHT * 2) - SSD1306_LCD_HEIGHT / 2,
+      random(SSD1306_LCD_HEIGHT),
       random(2),
       true,
       random(2)

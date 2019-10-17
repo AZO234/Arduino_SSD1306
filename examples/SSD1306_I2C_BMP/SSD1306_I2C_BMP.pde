@@ -20,9 +20,7 @@
 #include <ssd1306_i2c.h>
 #include "bmp.h"
 
-/* if change this sizes, don't forget to change ssd1306.h too. */
-#define SSD1306_I2C_WIDTH   128
-#define SSD1306_I2C_HEIGHT  64
+/* if You wanna change Width and Height, don't forget to change ssd1306.h too. */
 
 extern BMP_t tLala;
 
@@ -93,7 +91,7 @@ void setup() {
     SSD1306_I2C_EndTransmission,
     SSD1306_I2C_MemoryBarrier,
     &pLock,
-    0x3C, SSD1306_I2C_WIDTH, SSD1306_I2C_HEIGHT, 0xFF
+    0x3C, SSD1306_LCD_WIDTH, SSD1306_LCD_HEIGHT, 0xFF
   );
 
   Wire.begin();
