@@ -703,12 +703,12 @@ static void SSD1306_Refresh_sub(SSD1306_t* ptSSD1306, const uint8_t u8PreSeg) {
   if(ptSSD1306->tWriteSeg.u8Count > 0) {
     ptSSD1306->tWriteCommand.u8Count = 3;
     ptSSD1306->tWriteCommand.au8Data[0] = 0x21;  /* set Column Address */
-#ifndef SSD1306_LCD_72X40
-    ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
-    ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
-#else  /* SSD1306_LCD_72X40 */
+#ifdef SSD1306_LCD_72X40
     ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg + 0x1C;
     ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + 0x1C + (ptSSD1306->tWriteSeg.u8Count - 1);
+#else  /* SSD1306_LCD_72X40 */
+    ptSSD1306->tWriteCommand.au8Data[1] = u8PreSeg;
+    ptSSD1306->tWriteCommand.au8Data[2] = u8PreSeg + (ptSSD1306->tWriteSeg.u8Count - 1);
 #endif  /* SSD1306_LCD_72X40 */
     Lock(ptSSD1306);
     ptSSD1306->tWrite(ptSSD1306->pInstance, &ptSSD1306->tWriteCommand);
