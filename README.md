@@ -1,7 +1,7 @@
 Library of OLED modules connect with SSD1306(I2C/SPI bus) by AZO
 ================================================================
-version: v1.0.1(Sep 19, 2019)  
-http://domisan.sakura.ne.jp/
+version: v1.0.2(Jan 6, 2021)  
+https://domisan.sakura.ne.jp/
 
 Library of OLED modules connect with SSD1306(I2C/SPI bus).
 
